@@ -316,6 +316,14 @@ class SafeFrequencyOption {
   });
 }
 
+/// موعد أخذ أول جرعة لتحديد الجدول الذكي وفترة الأمان
+enum FirstDoseStatus {
+  justNow, // ⚡ أخذتها الآن
+  earlierToday, // 🕒 أخذتها اليوم في وقت سابق
+  yesterday, // 📅 أخذتها بالأمس
+  notYet, // ⏳ لم أتناولها بعد (سأبدأ لاحقاً)
+}
+
 class AddMedicineSheet extends StatefulWidget {
   final Medicine? initialMedicine;
   final DrugInfo? initialDrugInfo;
@@ -360,6 +368,8 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
   int _minSafeIntervalHours = 6;
   int _maxDailyDoses = 4;
   TimeOfDay _firstDoseTime = const TimeOfDay(hour: 8, minute: 0);
+  DateTime _firstDoseTakenDateTime = DateTime.now();
+  FirstDoseStatus _firstDoseStatus = FirstDoseStatus.justNow;
   List<TimeOfDay> _scheduledTimes = [];
 
   String _selectedProfileId = 'self';
@@ -374,6 +384,9 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
 
     if (widget.initialDrugInfo != null) {
       _selectDrug(widget.initialDrugInfo!);
+      _firstDoseStatus = FirstDoseStatus.justNow;
+      _firstDoseTakenDateTime = DateTime.now();
+      _firstDoseTime = TimeOfDay.fromDateTime(_firstDoseTakenDateTime);
     } else if (med != null) {
       // Find matching drug info from database
       final searchHits = DrugDatabase.search(med.name);
@@ -422,8 +435,29 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
           ? med.scheduledTimes.length
           : (24 ~/ _intervalHours).clamp(1, 4);
       _colorValue = med.colorValue;
+
+      if (med.lastTakenTime != null) {
+        _firstDoseTakenDateTime = med.lastTakenTime!;
+        final now = DateTime.now();
+        final diffMins = now.difference(_firstDoseTakenDateTime).inMinutes;
+        if (diffMins >= 0 && diffMins < 30) {
+          _firstDoseStatus = FirstDoseStatus.justNow;
+        } else if (AppDateUtils.isSameDay(_firstDoseTakenDateTime, now)) {
+          _firstDoseStatus = FirstDoseStatus.earlierToday;
+        } else if (AppDateUtils.isYesterday(_firstDoseTakenDateTime, now)) {
+          _firstDoseStatus = FirstDoseStatus.yesterday;
+        } else {
+          _firstDoseStatus = FirstDoseStatus.earlierToday;
+        }
+        _firstDoseTime = TimeOfDay.fromDateTime(_firstDoseTakenDateTime);
+      } else {
+        _firstDoseStatus = FirstDoseStatus.notYet;
+        _firstDoseTakenDateTime = DateTime.now();
+      }
     } else {
-      _firstDoseTime = TimeOfDay.now();
+      _firstDoseStatus = FirstDoseStatus.justNow;
+      _firstDoseTakenDateTime = DateTime.now();
+      _firstDoseTime = TimeOfDay.fromDateTime(_firstDoseTakenDateTime);
       _totalPills = 30;
       _pillsPerDose = 1;
       _lowStockThreshold = 5;
@@ -492,10 +526,126 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
           ? 0xFF8B5CF6
           : (drug.type == MedicineType.painkiller ? 0xFFEF4444 : 0xFF0D9488);
 
+      _firstDoseStatus = FirstDoseStatus.justNow;
+      _firstDoseTakenDateTime = DateTime.now();
+      _firstDoseTime = TimeOfDay.fromDateTime(_firstDoseTakenDateTime);
+
       _recalculateTimes();
       _encyclopediaSuggestions = [];
       _encyclopediaSearchController.clear();
     });
+  }
+
+  void _onFirstDoseStatusChanged(FirstDoseStatus status) {
+    setState(() {
+      _firstDoseStatus = status;
+      final now = DateTime.now();
+      switch (status) {
+        case FirstDoseStatus.justNow:
+          _firstDoseTakenDateTime = now;
+          _firstDoseTime = TimeOfDay.fromDateTime(_firstDoseTakenDateTime);
+          _recalculateTimes();
+          break;
+        case FirstDoseStatus.earlierToday:
+          _firstDoseTakenDateTime = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            _firstDoseTime.hour,
+            _firstDoseTime.minute,
+          );
+          _recalculateTimes();
+          break;
+        case FirstDoseStatus.yesterday:
+          final yest = now.subtract(const Duration(days: 1));
+          _firstDoseTakenDateTime = DateTime(
+            yest.year,
+            yest.month,
+            yest.day,
+            _firstDoseTime.hour,
+            _firstDoseTime.minute,
+          );
+          _recalculateTimes();
+          break;
+        case FirstDoseStatus.notYet:
+          _recalculateTimes();
+          break;
+      }
+    });
+  }
+
+  Future<void> _pickCustomFirstDoseTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _firstDoseTime,
+    );
+    if (picked != null) {
+      setState(() {
+        _firstDoseTime = picked;
+        final now = DateTime.now();
+        if (_firstDoseStatus == FirstDoseStatus.yesterday) {
+          final yest = now.subtract(const Duration(days: 1));
+          _firstDoseTakenDateTime = DateTime(
+            yest.year,
+            yest.month,
+            yest.day,
+            picked.hour,
+            picked.minute,
+          );
+        } else if (_firstDoseStatus == FirstDoseStatus.notYet) {
+          // Schedule anchor updated
+        } else {
+          if (_firstDoseStatus == FirstDoseStatus.justNow) {
+            _firstDoseStatus = FirstDoseStatus.earlierToday;
+          }
+          _firstDoseTakenDateTime = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            picked.hour,
+            picked.minute,
+          );
+        }
+        _recalculateTimes();
+      });
+    }
+  }
+
+  String _formatFirstDoseSummary(DateTime dt) {
+    final now = DateTime.now();
+    final timeStr = AppDateUtils.formatTime(dt);
+    if (AppDateUtils.isSameDay(dt, now)) {
+      return 'اليوم في $timeStr';
+    } else if (AppDateUtils.isYesterday(dt, now)) {
+      return 'أمس في $timeStr';
+    } else {
+      return '${AppDateUtils.formatShortDate(dt)} في $timeStr';
+    }
+  }
+
+  String _formatNextDoseSummary(DateTime dt) {
+    final now = DateTime.now();
+    final timeStr = AppDateUtils.formatTime(dt);
+    final diff = dt.difference(now);
+    String relative = '';
+    if (diff.isNegative) {
+      relative = '(حان موعدها)';
+    } else if (diff.inHours > 0) {
+      final mins = diff.inMinutes % 60;
+      relative = mins > 0
+          ? '(بعد ${diff.inHours} س و $mins د)'
+          : '(بعد ${diff.inHours} س)';
+    } else {
+      relative = '(بعد ${diff.inMinutes} د)';
+    }
+
+    if (AppDateUtils.isSameDay(dt, now)) {
+      return 'اليوم في $timeStr $relative';
+    } else if (AppDateUtils.isTomorrow(dt, now)) {
+      return 'غداً في $timeStr $relative';
+    } else {
+      return '${AppDateUtils.formatShortDate(dt)} في $timeStr $relative';
+    }
   }
 
   void _changeDosage(String dosage) {
@@ -1324,7 +1474,7 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                 ),
                 const SizedBox(height: 14),
 
-                // B. Timings & Frequencies (Safe Options Only)
+                // B. Safe Frequency or Safe Interval Choice Chips
                 if (_type == MedicineType.treatment) ...[
                   const Text(
                     Ar.safeFrequencyTitle,
@@ -1356,166 +1506,7 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 12),
-
-                  // Starting Dose Anchor
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF1E1B4B)
-                          : const Color(0xFFF5F3FF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.play_circle_outline_rounded,
-                              color: Color(0xFF8B5CF6),
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            const Expanded(
-                              child: Text(
-                                Ar.firstDoseAnchorTitle,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: Color(0xFF6D28D9),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          Ar.firstDoseAnchorDesc,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? Colors.grey[300] : Colors.grey[700],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.cardColor,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: const Color(0xFF8B5CF6)
-                                      .withValues(alpha: 0.4),
-                                ),
-                              ),
-                              child: Text(
-                                AppDateUtils.formatTimeOfDay(_firstDoseTime),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF6D28D9),
-                                ),
-                              ),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  _firstDoseTime = TimeOfDay.now();
-                                  _recalculateTimes();
-                                });
-                              },
-                              icon: const Icon(Icons.bolt, size: 14),
-                              label: const Text(
-                                Ar.tookItNowBtn,
-                                style: TextStyle(fontSize: 11),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                              ),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: () async {
-                                final picked = await showTimePicker(
-                                  context: context,
-                                  initialTime: _firstDoseTime,
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    _firstDoseTime = picked;
-                                    _recalculateTimes();
-                                  });
-                                }
-                              },
-                              icon: const Icon(Icons.access_time, size: 14),
-                              label: const Text(
-                                Ar.changeFirstDoseTime,
-                                style: TextStyle(fontSize: 11),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Calculated Schedule Chips
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: List.generate(_scheduledTimes.length, (index) {
-                      final time = _scheduledTimes[index];
-                      final formatted = AppDateUtils.formatTimeOfDay(time);
-                      return Chip(
-                        backgroundColor: const Color(0xFF8B5CF6)
-                            .withValues(alpha: 0.12),
-                        side: BorderSide.none,
-                        avatar: CircleAvatar(
-                          backgroundColor: const Color(0xFF8B5CF6),
-                          radius: 9,
-                          child: Text(
-                            '${index + 1}',
-                            style: const TextStyle(
-                              fontSize: 9,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        label: Text(
-                          formatted,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Color(0xFF6D28D9),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
                 ] else ...[
-                  // Painkiller Safe Interval Selection
                   const Text(
                     Ar.painkillerIntervalQuestion,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
@@ -1544,6 +1535,10 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                     }).toList(),
                   ),
                 ],
+                const SizedBox(height: 14),
+
+                // C. First Dose Taken Selector Card (متى أخذت أول جرعة)
+                _buildFirstDoseTimingCard(isDark: isDark, theme: theme),
                 const SizedBox(height: 16),
 
                 // C. Stock Counter (كم حبة متوفرة بالعلبة)
@@ -1814,6 +1809,27 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
   void _saveMedicine() {
     if (_selectedDrugInfo == null) return;
 
+    DateTime? lastTaken;
+    DateTime? dynamicNext;
+    String? rescheduleNote;
+
+    if (_firstDoseStatus != FirstDoseStatus.notYet) {
+      lastTaken = _firstDoseTakenDateTime;
+      dynamicNext = _firstDoseTakenDateTime.add(
+        Duration(hours: _intervalHours),
+      );
+      if (_type == MedicineType.treatment) {
+        rescheduleNote =
+            'تم تحديد جدول الجرعات بناءً على موعد أول جرعة تم أخذها (${AppDateUtils.formatTimeOfDay(TimeOfDay.fromDateTime(_firstDoseTakenDateTime))})';
+      } else {
+        rescheduleNote = 'سيبدأ فاصل الأمان الدوائي من وقت أول جرعة';
+      }
+    } else {
+      lastTaken = null;
+      dynamicNext = null;
+      rescheduleNote = null;
+    }
+
     final medicine = Medicine(
       id: widget.initialMedicine?.id ??
           'med_${DateTime.now().millisecondsSinceEpoch}',
@@ -1826,6 +1842,9 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
       instructions: _foodRelationText,
       scheduledTimes: _scheduledTimes,
       firstDoseTime: _firstDoseTime,
+      lastTakenTime: lastTaken,
+      dynamicNextDoseTime: dynamicNext,
+      dynamicRescheduleNote: rescheduleNote,
       minSafeIntervalHours: _minSafeIntervalHours,
       intervalHours: _intervalHours,
       maxDailyDoses: _maxDailyDoses,
@@ -1836,6 +1855,359 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
 
     widget.onSave(medicine);
     Navigator.pop(context);
+  }
+
+  Widget _buildFirstDoseTimingCard({
+    required bool isDark,
+    required ThemeData theme,
+  }) {
+    final accentColor = _type == MedicineType.painkiller
+        ? const Color(0xFFEF4444)
+        : const Color(0xFF8B5CF6);
+
+    final isTaken = _firstDoseStatus != FirstDoseStatus.notYet;
+    final nextDoseTime = _firstDoseTakenDateTime.add(
+      Duration(hours: _intervalHours),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark
+            ? (accentColor == const Color(0xFFEF4444)
+                ? const Color(0xFF3B1212)
+                : const Color(0xFF1E1B4B))
+            : (accentColor == const Color(0xFFEF4444)
+                ? const Color(0xFFFEF2F2)
+                : const Color(0xFFF5F3FF)),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.35),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.access_time_filled_rounded,
+                  color: accentColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      Ar.whenDidYouTakeFirstDoseTitle,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.5,
+                        color: isDark ? Colors.white : accentColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      Ar.whenDidYouTakeFirstDoseSubtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? Colors.grey[300] : Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // 4 Preset Choice Chips
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text(
+                  Ar.firstDoseJustNow,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                selected: _firstDoseStatus == FirstDoseStatus.justNow,
+                selectedColor: accentColor,
+                labelStyle: TextStyle(
+                  color: _firstDoseStatus == FirstDoseStatus.justNow
+                      ? Colors.white
+                      : null,
+                ),
+                onSelected: (val) {
+                  if (val) _onFirstDoseStatusChanged(FirstDoseStatus.justNow);
+                },
+              ),
+              ChoiceChip(
+                label: const Text(
+                  Ar.firstDoseToday,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                selected: _firstDoseStatus == FirstDoseStatus.earlierToday,
+                selectedColor: accentColor,
+                labelStyle: TextStyle(
+                  color: _firstDoseStatus == FirstDoseStatus.earlierToday
+                      ? Colors.white
+                      : null,
+                ),
+                onSelected: (val) {
+                  if (val) {
+                    _onFirstDoseStatusChanged(FirstDoseStatus.earlierToday);
+                  }
+                },
+              ),
+              ChoiceChip(
+                label: const Text(
+                  Ar.firstDoseYesterday,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                selected: _firstDoseStatus == FirstDoseStatus.yesterday,
+                selectedColor: accentColor,
+                labelStyle: TextStyle(
+                  color: _firstDoseStatus == FirstDoseStatus.yesterday
+                      ? Colors.white
+                      : null,
+                ),
+                onSelected: (val) {
+                  if (val) {
+                    _onFirstDoseStatusChanged(FirstDoseStatus.yesterday);
+                  }
+                },
+              ),
+              ChoiceChip(
+                label: const Text(
+                  Ar.firstDoseNotYet,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                selected: _firstDoseStatus == FirstDoseStatus.notYet,
+                selectedColor: accentColor,
+                labelStyle: TextStyle(
+                  color: _firstDoseStatus == FirstDoseStatus.notYet
+                      ? Colors.white
+                      : null,
+                ),
+                onSelected: (val) {
+                  if (val) _onFirstDoseStatusChanged(FirstDoseStatus.notYet);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Detail Display & Time Picker Button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: accentColor.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isTaken
+                      ? Icons.check_circle_rounded
+                      : Icons.hourglass_top_rounded,
+                  color: isTaken ? const Color(0xFF10B981) : Colors.amber,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isTaken
+                            ? 'الوقت المسجل للجرعة الأولى:'
+                            : 'موعد البدء المحدد:',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        isTaken
+                            ? _formatFirstDoseSummary(_firstDoseTakenDateTime)
+                            : 'سيبدأ عند ${AppDateUtils.formatTimeOfDay(_firstDoseTime)}',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: accentColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _pickCustomFirstDoseTime,
+                  icon: const Icon(Icons.edit_calendar_rounded, size: 16),
+                  label: const Text(
+                    'تعديل ⏱️',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: accentColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Dynamic Projection Banner
+          if (isTaken) ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D9488).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF0D9488).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Color(0xFF0D9488),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _type == MedicineType.treatment
+                              ? Ar.nextDoseProjectedTime
+                              : 'موعد انتهاء فاصل الأمان (الجرعة القادمة):',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0D9488),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatNextDoseSummary(nextDoseTime),
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F766E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.blue.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: Colors.blue,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _type == MedicineType.treatment
+                          ? 'سيتم تذكيرك بالجرعة الأولى في الموعد المجدول المحدد أعلاه، ويبدأ الجدول تلقائياً.'
+                          : 'يمكنك تناول أول جرعة عند الشعور بالألم، وسيبدأ حساب فاصل الأمان تلقائياً فور تسجيلها.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark ? Colors.blue[200] : Colors.blue[900],
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // If Treatment: Show scheduled daily times chips
+          if (_type == MedicineType.treatment &&
+              _scheduledTimes.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              '🗓️ جدول مواعيد التذكير اليومية المحسوبة:',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: List.generate(_scheduledTimes.length, (index) {
+                final time = _scheduledTimes[index];
+                final formatted = AppDateUtils.formatTimeOfDay(time);
+                return Chip(
+                  backgroundColor: accentColor.withValues(alpha: 0.12),
+                  side: BorderSide.none,
+                  avatar: CircleAvatar(
+                    backgroundColor: accentColor,
+                    radius: 8,
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(
+                        fontSize: 8.5,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  label: Text(
+                    formatted,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11.5,
+                      color: accentColor,
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _buildSectionHeader({

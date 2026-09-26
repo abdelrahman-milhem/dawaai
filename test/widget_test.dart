@@ -13,6 +13,7 @@ import 'package:dawaai/data/drug_database.dart';
 import 'package:dawaai/widgets/doctor_report_sheet.dart';
 import 'package:dawaai/widgets/official_stamp_widget.dart';
 import 'package:dawaai/widgets/add_medicine_sheet.dart';
+import 'package:dawaai/utils/date_utils.dart';
 
 void main() {
   setUpAll(() {
@@ -746,4 +747,116 @@ void main() {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
+
+  testWidgets('AddMedicineSheet first dose selection sets lastTakenTime and computes dynamicNextDoseTime for treatments', (WidgetTester tester) async {
+    final augmentin = DrugDatabase.search('أوجمنتين').first;
+    Medicine? savedMed;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AddMedicineSheet(
+            initialDrugInfo: augmentin,
+            onSave: (med) {
+              savedMed = med;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // 1. Verify First Dose Selection Card is rendered
+    expect(find.text(Ar.whenDidYouTakeFirstDoseTitle), findsOneWidget);
+    expect(find.text(Ar.firstDoseJustNow), findsOneWidget);
+    expect(find.text(Ar.firstDoseToday), findsOneWidget);
+    expect(find.text(Ar.firstDoseYesterday), findsOneWidget);
+    expect(find.text(Ar.firstDoseNotYet), findsOneWidget);
+
+    // 2. Default is 'أخذتها الآن' -> save and verify lastTakenTime is set
+    final saveBtn = find.text(Ar.saveMedicineBtn);
+    await tester.ensureVisible(saveBtn);
+    await tester.tap(saveBtn);
+    await tester.pump();
+
+    expect(savedMed, isNotNull);
+    expect(savedMed!.lastTakenTime, isNotNull);
+    expect(savedMed!.dynamicNextDoseTime, isNotNull);
+    final diffHours = savedMed!.dynamicNextDoseTime!.difference(savedMed!.lastTakenTime!).inHours;
+    expect(diffHours, equals(savedMed!.intervalHours));
+  });
+
+  testWidgets('AddMedicineSheet first dose "لم أتناولها بعد" leaves lastTakenTime as null', (WidgetTester tester) async {
+    final augmentin = DrugDatabase.search('أوجمنتين').first;
+    Medicine? savedMed;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AddMedicineSheet(
+            initialDrugInfo: augmentin,
+            onSave: (med) {
+              savedMed = med;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Tap 'لم أتناولها بعد' chip
+    final notYetChip = find.text(Ar.firstDoseNotYet);
+    await tester.ensureVisible(notYetChip);
+    await tester.tap(notYetChip);
+    await tester.pump();
+
+    // Tap save
+    final saveBtn = find.text(Ar.saveMedicineBtn);
+    await tester.ensureVisible(saveBtn);
+    await tester.tap(saveBtn);
+    await tester.pump();
+
+    expect(savedMed, isNotNull);
+    expect(savedMed!.lastTakenTime, isNull);
+    expect(savedMed!.dynamicNextDoseTime, isNull);
+  });
+
+  testWidgets('AddMedicineSheet first dose "أخذتها بالأمس" calculates yesterday timestamp', (WidgetTester tester) async {
+    final panadol = DrugDatabase.search('بنادول').first;
+    Medicine? savedMed;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AddMedicineSheet(
+            initialDrugInfo: panadol,
+            onSave: (med) {
+              savedMed = med;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Tap 'أخذتها بالأمس' chip
+    final yesterdayChip = find.text(Ar.firstDoseYesterday);
+    await tester.ensureVisible(yesterdayChip);
+    await tester.tap(yesterdayChip);
+    await tester.pump();
+
+    // Tap save
+    final saveBtn = find.text(Ar.saveMedicineBtn);
+    await tester.ensureVisible(saveBtn);
+    await tester.tap(saveBtn);
+    await tester.pump();
+
+    expect(savedMed, isNotNull);
+    expect(savedMed!.lastTakenTime, isNotNull);
+    expect(AppDateUtils.isYesterday(savedMed!.lastTakenTime!), isTrue);
+  });
 }
+

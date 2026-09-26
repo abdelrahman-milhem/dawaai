@@ -343,7 +343,16 @@ class Ar {
   static const String unitPill = 'حبة';
   static const String unitPills = 'حبات';
 
-  // Timing & Schedule
+  // Timing & Schedule - First Dose Selection
+  static const String whenDidYouTakeFirstDoseTitle = 'متى أخذت أول جرعة من الدواء؟';
+  static const String whenDidYouTakeFirstDoseSubtitle =
+      'لتحديد جدولك بدقة وحساب موعد الجرعة القادمة وفترة الأمان الزمني';
+  static const String firstDoseJustNow = '⚡ أخذتها الآن';
+  static const String firstDoseToday = '🕒 أخذتها اليوم';
+  static const String firstDoseYesterday = '📅 أخذتها بالأمس';
+  static const String firstDoseNotYet = '⏳ لم أتناولها بعد';
+  static const String firstDoseCustomDateTime = 'تحديد وقت آخر ⏱️';
+  static const String nextDoseProjectedTime = 'موعد الجرعة القادمة المتوقع:';
   static const String step4TimingTitle = 'مواعيد التذكير اليومية';
   static const String dailyTimesSectionTitle = 'أوقات التذكير اليومية:';
   static const String morningPreset = 'صباحاً (08:00 ص)';

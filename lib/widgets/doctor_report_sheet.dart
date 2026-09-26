@@ -53,8 +53,9 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
             color: Colors.white,
           ),
         ),
-        backgroundColor:
-            isError ? const Color(0xFFEF4444) : const Color(0xFF0D9488),
+        backgroundColor: isError
+            ? const Color(0xFFEF4444)
+            : const Color(0xFF0D9488),
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -78,8 +79,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
       }
 
       final image = await boundary.toImage(pixelRatio: 2.5);
-      final byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       return byteData?.buffer.asUint8List();
     } catch (e, stack) {
       debugPrint('Error capturing A4 raster: $e\n$stack');
@@ -312,8 +312,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
       buffer.writeln(Ar.reportNoMeds);
     } else {
       for (final med in medicines) {
-        final type =
-            med.isPainkiller ? Ar.painkillerAsNeeded : Ar.treatmentTag;
+        final type = med.isPainkiller ? Ar.painkillerAsNeeded : Ar.treatmentTag;
         buffer.writeln('• *${med.name}* ($type)');
         buffer.writeln(
           '  - ${Ar.reportDoseLabel} ${med.pillsPerDose} ${med.unitLabel}',
@@ -323,9 +322,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
         );
         if (med.isTreatment && med.scheduledTimes.isNotEmpty) {
           final times = med.scheduledTimes
-              .map(
-                (t) => '${t.hour}:${t.minute.toString().padLeft(2, '0')}',
-              )
+              .map((t) => '${t.hour}:${t.minute.toString().padLeft(2, '0')}')
               .join(', ');
           buffer.writeln('  - ${Ar.reportDailyTimes} $times');
         }
@@ -432,10 +429,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: const Color(0xFFE2E8F0),
-            height: 1,
-          ),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1),
         ),
       ),
       body: Container(
@@ -483,10 +477,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
             ),
           ],
           border: const Border(
-            top: BorderSide(
-              color: Color(0xFFE2E8F0),
-              width: 1,
-            ),
+            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
           ),
         ),
         child: SafeArea(
@@ -507,10 +498,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Icon(
-                          Icons.picture_as_pdf_rounded,
-                          size: 20,
-                        ),
+                      : const Icon(Icons.picture_as_pdf_rounded, size: 20),
                   label: Text(
                     Ar.reportBtnDownloadPdf,
                     style: GoogleFonts.cairo(
@@ -545,10 +533,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Icon(
-                          Icons.image_rounded,
-                          size: 20,
-                        ),
+                      : const Icon(Icons.image_rounded, size: 20),
                   label: Text(
                     Ar.reportBtnDownloadImage,
                     style: GoogleFonts.cairo(
@@ -585,8 +570,8 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                       ),
                 tooltip: Ar.reportBtnPrint,
                 style: IconButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFF0D9488).withValues(alpha: 0.1),
+                  backgroundColor: const Color(0xFF0D9488)
+                      .withValues(alpha: 0.1),
                   padding: const EdgeInsets.all(10),
                 ),
               ),
@@ -601,19 +586,13 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                     painLogs,
                     recentLogs,
                   );
-                  await Clipboard.setData(
-                    ClipboardData(text: reportText),
-                  );
+                  await Clipboard.setData(ClipboardData(text: reportText));
                   _showToast(Ar.reportCopiedSuccess);
                 },
-                icon: const Icon(
-                  Icons.copy_rounded,
-                  size: 20,
-                ),
+                icon: const Icon(Icons.copy_rounded, size: 20),
                 tooltip: Ar.reportBtnCopy,
                 style: IconButton.styleFrom(
-                  backgroundColor:
-                      Colors.grey.withValues(alpha: 0.12),
+                  backgroundColor: Colors.grey.withValues(alpha: 0.12),
                   padding: const EdgeInsets.all(10),
                 ),
               ),
@@ -643,13 +622,16 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
     int scheduledDosesExpected = 0;
     for (final med in medicines) {
       if (med.isTreatment) {
-        final timesPerDay =
-            med.scheduledTimes.isNotEmpty ? med.scheduledTimes.length : 1;
+        final timesPerDay = med.scheduledTimes.isNotEmpty
+            ? med.scheduledTimes.length
+            : 1;
         scheduledDosesExpected += (timesPerDay * 7);
       }
     }
     final adherenceRate = scheduledDosesExpected > 0
-        ? ((recentLogs.length / scheduledDosesExpected) * 100).clamp(0, 100).toInt()
+        ? ((recentLogs.length / scheduledDosesExpected) * 100)
+              .clamp(0, 100)
+              .toInt()
         : 100;
 
     return Theme(
@@ -731,7 +713,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                           ),
                         ),
                         Text(
-                          'نظام الرعاية الدوائية المتقدم والتوثيق السريري',
+                          'نظام الرعاية الدوائية المتقدم والتوثيق',
                           style: GoogleFonts.cairo(
                             fontSize: 9.5,
                             color: const Color(0xFF475569),
@@ -848,9 +830,8 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0D9488).withValues(
-                                alpha: 0.12,
-                              ),
+                              color: const Color(0xFF0D9488)
+                                  .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -1130,13 +1111,13 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                           final isEven = medicines.indexOf(med) % 2 == 0;
                           final scheduleText = med.isTreatment
                               ? (med.scheduledTimes.isNotEmpty
-                                  ? med.scheduledTimes
-                                      .map(
-                                        (t) =>
-                                            '${t.hour}:${t.minute.toString().padLeft(2, '0')}',
-                                      )
-                                      .join(' ، ')
-                                  : 'مجدول يومياً')
+                                    ? med.scheduledTimes
+                                          .map(
+                                            (t) =>
+                                                '${t.hour}:${t.minute.toString().padLeft(2, '0')}',
+                                          )
+                                          .join(' ، ')
+                                    : 'مجدول يومياً')
                               : 'عند اللزوم (فاصل ${med.minSafeIntervalHours} س)';
 
                           final isLowStock =
@@ -1187,8 +1168,9 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                                           color: med.isPainkiller
                                               ? const Color(0xFFFEF3C7)
                                               : const Color(0xFFE0F2FE),
-                                          borderRadius:
-                                              BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: Text(
                                           med.isPainkiller ? 'مسكن' : 'علاج',
@@ -1258,24 +1240,24 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                                       color: isLowStock
                                           ? const Color(0xFFFEE2E2)
                                           : (med.isPainkiller
-                                              ? const Color(0xFFFEF3C7)
-                                              : const Color(0xFFECFDF5)),
+                                                ? const Color(0xFFFEF3C7)
+                                                : const Color(0xFFECFDF5)),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
                                       isLowStock
                                           ? Ar.reportStatusLow
                                           : (med.isPainkiller
-                                              ? Ar.reportStatusAsNeeded
-                                              : Ar.reportStatusGood),
+                                                ? Ar.reportStatusAsNeeded
+                                                : Ar.reportStatusGood),
                                       style: GoogleFonts.cairo(
                                         fontSize: 8.5,
                                         fontWeight: FontWeight.bold,
                                         color: isLowStock
                                             ? const Color(0xFFB91C1C)
                                             : (med.isPainkiller
-                                                ? const Color(0xFF92400E)
-                                                : const Color(0xFF047857)),
+                                                  ? const Color(0xFF92400E)
+                                                  : const Color(0xFF047857)),
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
@@ -1328,10 +1310,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                                 ),
                               ],
                             ),
-                            const Divider(
-                              color: Color(0xFFE2E8F0),
-                              height: 10,
-                            ),
+                            const Divider(color: Color(0xFFE2E8F0), height: 10),
                             Text(
                               '• إجمالي الجرعات: ${recentLogs.length} جرعة',
                               style: GoogleFonts.cairo(
@@ -1424,10 +1403,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                                 ),
                               ],
                             ),
-                            const Divider(
-                              color: Color(0xFFE2E8F0),
-                              height: 10,
-                            ),
+                            const Divider(color: Color(0xFFE2E8F0), height: 10),
                             if (painLogs.isEmpty)
                               Expanded(
                                 child: Center(
@@ -1443,8 +1419,9 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                               )
                             else
                               ...painLogs.take(2).map((pl) {
-                                final timeStr =
-                                    AppDateUtils.formatDateTime(pl.takenAt);
+                                final timeStr = AppDateUtils.formatDateTime(
+                                  pl.takenAt,
+                                );
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 4),
                                   child: Column(

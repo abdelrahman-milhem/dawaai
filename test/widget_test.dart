@@ -12,6 +12,7 @@ import 'package:dawaai/services/reminder_service.dart';
 import 'package:dawaai/data/drug_database.dart';
 import 'package:dawaai/widgets/doctor_report_sheet.dart';
 import 'package:dawaai/widgets/official_stamp_widget.dart';
+import 'package:dawaai/widgets/add_medicine_sheet.dart';
 
 void main() {
   setUpAll(() {
@@ -556,5 +557,157 @@ void main() {
     // Verify Official Stamp #6 is rendered on the document
     expect(find.byType(OfficialStampWidget), findsOneWidget);
     expect(find.text('DAWAAI CLINICAL EXCELLENCE'), findsOneWidget);
+  });
+
+  test('Clinical Safety Engine correctly locks food relation and limits single doses strictly', () {
+    // 1. Panadol 500mg -> Paracetamol safe single dose max is 2 pills (1000mg)
+    final panadol = DrugDatabase.search('بنادول').first;
+    final panadolLimit = ClinicalSafetyRule.getMaxSafeSingleDose(
+      drug: panadol,
+      selectedDosage: '500 ملغ (أدفانس)',
+      form: MedicineForm.pill,
+    );
+    expect(panadolLimit.maxSafeDose, equals(2));
+    expect(panadolLimit.unit, equals('حبة'));
+
+    // 2. High strength 1000mg or Joint 665mg -> strictly 1 pill max
+    final panadol1000Limit = ClinicalSafetyRule.getMaxSafeSingleDose(
+      drug: panadol,
+      selectedDosage: 'جوينت 665 ملغ ممتد المفعول',
+      form: MedicineForm.pill,
+    );
+    expect(panadol1000Limit.maxSafeDose, equals(1));
+
+    // 3. Brufen (NSAID) -> strictly 1 pill max (to protect stomach & kidneys)
+    final brufen = DrugDatabase.search('بروفين').first;
+    final brufenLimit = ClinicalSafetyRule.getMaxSafeSingleDose(
+      drug: brufen,
+      selectedDosage: '400 ملغ',
+      form: MedicineForm.pill,
+    );
+    expect(brufenLimit.maxSafeDose, equals(1));
+
+    // 4. Augmentin (Antibiotic) -> strictly 1 pill max
+    final augmentin = DrugDatabase.search('أوجمنتين').first;
+    final augmentinLimit = ClinicalSafetyRule.getMaxSafeSingleDose(
+      drug: augmentin,
+      selectedDosage: '1 جم أقراص',
+      form: MedicineForm.pill,
+    );
+    expect(augmentinLimit.maxSafeDose, equals(1));
+
+    // 5. Syrup form -> ml unit and max 15ml
+    final syrupLimit = ClinicalSafetyRule.getMaxSafeSingleDose(
+      drug: panadol,
+      selectedDosage: 'شراب أطفال 120ملغ/5مل',
+      form: MedicineForm.syrup,
+    );
+    expect(syrupLimit.maxSafeDose, equals(15));
+    expect(syrupLimit.unit, equals('مل'));
+
+    // 6. Food Relation Auto-Determination (Locked)
+    // Nexium / PPI -> Before food on empty stomach
+    final nexium = DrugDatabase.search('نيكسيوم').first;
+    expect(ClinicalSafetyRule.getLockedFoodRelation(nexium), equals(Ar.foodBefore));
+
+    // Brufen / NSAID -> After food with meal
+    expect(ClinicalSafetyRule.getLockedFoodRelation(brufen), equals(Ar.foodAfter));
+
+    // 7. Safe Frequencies based on pharmacological interval
+    final safeFreqs24h = ClinicalSafetyRule.getSafeFrequencies(nexium);
+    expect(safeFreqs24h.length, equals(1)); // only once daily
+    expect(safeFreqs24h.first.intervalHours, equals(24));
+
+    final safeFreqsAugmentin = ClinicalSafetyRule.getSafeFrequencies(augmentin);
+    expect(safeFreqsAugmentin.any((f) => f.dosesPerDay == 2), isTrue); // twice daily
+  });
+
+  testWidgets('AddMedicineSheet enforces encyclopedia selection, locks fields, and obeys safe dose stepper', (WidgetTester tester) async {
+    final panadol = DrugDatabase.search('بنادول').first;
+    Medicine? savedMed;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AddMedicineSheet(
+            initialDrugInfo: panadol,
+            onSave: (med) {
+              savedMed = med;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // 1. Verify locked fields are present
+    expect(find.text(Ar.tradeNameField), findsOneWidget);
+    expect(find.text(Ar.activeIngredientField), findsOneWidget);
+    expect(find.text(Ar.medicineTypeLockedTitle), findsOneWidget);
+    expect(find.text(Ar.foodTimingLockedTitle), findsOneWidget);
+
+    // 2. Verify Safe Stepper: initial is 1 pill, max is 2 pills for 500mg
+    expect(find.text('1 حبة'), findsOneWidget);
+
+    // Scroll into view and tap '+' button to reach safe max (2 pills)
+    final addButtons = find.byIcon(Icons.add);
+    await tester.ensureVisible(addButtons.first);
+    await tester.tap(addButtons.first);
+    await tester.pump();
+    expect(find.text('2 حبة'), findsOneWidget);
+
+    // Tap save button
+    final saveBtn = find.text(Ar.saveMedicineBtn);
+    await tester.ensureVisible(saveBtn);
+    await tester.tap(saveBtn);
+    await tester.pump();
+
+    expect(savedMed, isNotNull);
+    expect(savedMed!.name.contains('بنادول'), isTrue);
+    expect(savedMed!.pillsPerDose, equals(2));
+    expect(savedMed!.type, equals(MedicineType.painkiller));
+  });
+
+  testWidgets('AddMedicineSheet requires drug selection from encyclopedia before allowing save', (WidgetTester tester) async {
+    Medicine? savedMed;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AddMedicineSheet(
+            onSave: (med) {
+              savedMed = med;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // 1. Verify Step 1 is displayed
+    expect(find.text(Ar.step1SelectDrugTitle), findsOneWidget);
+    expect(find.text(Ar.selectDrugRequired), findsOneWidget);
+
+    // 2. Select a drug from quick picks (e.g. بنادول)
+    final panadolChip = find.text('بنادول (Panadol)');
+    await tester.ensureVisible(panadolChip);
+    await tester.tap(panadolChip);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // 3. Now locked clinical fields appear
+    expect(find.text(Ar.tradeNameField), findsOneWidget);
+    expect(find.text(Ar.saveMedicineBtn), findsOneWidget);
+
+    // 4. Tap save button
+    final saveBtn = find.text(Ar.saveMedicineBtn);
+    await tester.ensureVisible(saveBtn);
+    await tester.tap(saveBtn);
+    await tester.pump();
+
+    expect(savedMed, isNotNull);
+    expect(savedMed!.name.contains('بنادول'), isTrue);
   });
 }

@@ -297,44 +297,54 @@ class Ar {
     'ألم بالمعدة',
   ];
 
-  // Add/Edit Medicine Sheet - Elderly Friendly (بسيطة لكبار السن)
-  static const String addNewMedicineSheetTitle = 'إضافة دواء جديد';
-  static const String editMedicineSheetTitle = 'تعديل بيانات الدواء';
+  // Add/Edit Medicine Sheet - Encyclopedia Driven & Strict Clinical Safety
+  static const String addNewMedicineSheetTitle = 'إضافة علاج من الموسوعة';
+  static const String editMedicineSheetTitle = 'تعديل الخطة والجرعات';
   static const String addMedElderlySubtitle =
-      'خطوات بسيطة وواضحة لتنظيم دوائك وتذكيرك بمواعيده';
-  static const String searchEncyclopediaOptional =
-      'ابحث بالموسوعة لاختيار الدواء وعياره تلقائياً (اختياري):';
+      'إضافة معتمدة من الموسوعة الطبية مع تحديد الجرعات والمواعيد الآمنة';
+  static const String encyclopediaExclusiveNote =
+      '🛡️ الإضافة مقيدة بموسوعة الأدوية المعتمدة لضمان التحقق السريري ومطابقة الجرعات الآمنة.';
   static const String searchEncyclopediaHint =
-      'اكتب اسم الدواء (مثال: بنادول، كونكور، جلوكوفاج)...';
+      'ابحث بالاسم التجاري أو العلمي (مثل: بنادول، كونكور، جلوكوفاج)...';
   static const String tapToAutoFill = 'اضغط للاختيار';
   static const String customAddFreedomNote =
-      '💡 لست مقيداً بالموسوعة: يمكنك كتابة أي دواء أو عيار خاص بك بالأسفل بحرية تامة.';
+      '🛡️ جميع الأدوية موثقة وفق المعايير الدوائية المعتمدة لحمايتك من الأخطاء.';
 
-  // Elderly Step 1: Name
-  static const String step1NameTitle = '1. ما هو اسم الدواء وعياره؟';
-  static const String medicineNameField = 'اسم الدواء والجرعة *';
-  static const String medicineNameHintElderly =
-      'اكتب اسم الدواء (مثال: بنادول 500، كونكور 5 ملغ، دواء السكر)';
-  static const String medicineNameError = 'يرجى كتابة اسم الدواء';
+  // Step 1: Select from encyclopedia
+  static const String step1SelectDrugTitle = '1. اختيار الدواء من الموسوعة المعتمدة';
+  static const String searchOrScanPrompt =
+      'ابحث عن دوائك في الموسوعة أو امسح الباركود مباشرة:';
+  static const String popularDrugsQuickSelect = 'أدوية شائعة للاختيار السريع:';
+  static const String changeSelectedDrugBtn = 'تغيير الدواء';
 
-  // Elderly Step 2: Type
-  static const String step2TypeTitle = '2. ما نوع هذا الدواء؟';
-  static const String treatmentTypeCardTitle = 'علاج يومي منتظم';
-  static const String treatmentTypeCardDesc =
-      'دواء مستمر يؤخذ بمواعيد محددة (مثل: الضغط، السكر، القلب)';
-  static const String painkillerTypeCardTitle = 'مسكن ألم عند اللزوم';
-  static const String painkillerTypeCardDesc =
-      'يؤخذ فقط عند الشعور بألم مع فاصل أمان (مثل: الصداع، المفاصل)';
+  // Step 2: Locked Clinical Data
+  static const String step2LockedInfoTitle = '2. البيانات الدوائية والجرعة (مقفلة طبياً 🔒)';
+  static const String lockedAutoFilledNotice =
+      'تم تعبئة الاسم والعيار والمادة الفعالة ونوع الدواء وموعد الأكل تلقائياً من الموسوعة وهي مقفلة لضمان سلامتك.';
+  static const String tradeNameField = 'الاسم التجاري المعتمد';
+  static const String dosageStrengthField = 'العيار والجرعة المصرحة';
+  static const String activeIngredientField = 'المادة الفعالة والتصنيف الطبي';
+  static const String activeIngredientHint = 'المادة الفعالة المسجلة رسمياً';
+  static const String medicineTypeLockedTitle = 'نوع الدواء والتصنيف العلاجي';
+  static const String foodTimingLockedTitle = 'توقيت التناول بالنسبة للأكل';
 
-  // Elderly Step 3: Stock
-  static const String step3StockTitle = '3. كم حبة متوفرة عندك الآن بالعلبة؟';
-  static const String totalPillsLabel = 'عدد الحبات المتوفرة';
+  // Step 3: Safe Dose & Schedule
+  static const String step3SafeDoseScheduleTitle = '3. الخطة العلاجية والجرعات الآمنة';
+  static const String singleDoseStrictLimitTitle = 'كمية الجرعة الواحدة (مقيدة بحد أقصى آمن):';
+  static const String doseStrictLimitNotice =
+      '🛡️ الجرعة الواحدة مقيدة بحد أقصى آمن علمياً لمنع فرط الجرعة والتسمم الدوائي.';
+  static const String pillsPerDoseField = 'كمية الجرعة الواحدة';
+  static const String safeFrequencyTitle = 'معدل التكرار الآمن طبياً:';
+
+  // Stock
+  static const String stepStockTitle = 'كم حبة متوفرة عندك بالعلبة الآن؟';
+  static const String totalPillsLabel = 'المخزون المتوفر بالعلبة';
   static const String quickAddPills = 'إضافة سريعة:';
   static const String unitPill = 'حبة';
   static const String unitPills = 'حبات';
 
-  // Elderly Step 4: Timing & Schedule
-  static const String step4TimingTitle = '4. متى تأخذ هذا الدواء؟';
+  // Timing & Schedule
+  static const String step4TimingTitle = 'مواعيد التذكير اليومية';
   static const String dailyTimesSectionTitle = 'أوقات التذكير اليومية:';
   static const String morningPreset = 'صباحاً (08:00 ص)';
   static const String noonPreset = 'ظهراً (02:00 م)';
@@ -344,33 +354,31 @@ class Ar {
   static const String noScheduledTimesYet =
       'اضغط على أحد الأوقات أعلاه (صباحاً / مساءً) لتحديد موعد التنبيه.';
 
-  // Elderly Step 4 for Painkiller: Safe interval
+  // Painkiller Safe interval
   static const String painkillerIntervalQuestion =
-      'كم ساعة يجب أن تنتظر بين كل حبة وأخرى على الأقل؟';
+      'الفاصل الزمني الآمن بين الجرعات (حد أدنى):';
   static const String safeInterval4Hours = 'كل 4 ساعات';
   static const String safeInterval6Hours = 'كل 6 ساعات (المعتاد)';
   static const String safeInterval8Hours = 'كل 8 ساعات';
   static const String safeInterval12Hours = 'كل 12 ساعة';
 
-  // Elderly Step 5: Food instructions
-  static const String step5FoodTitle = '5. متى تأخذه بالنسبة للأكل؟';
-  static const String foodAfter = 'بعد الأكل';
-  static const String foodBefore = 'قبل الأكل';
+  // Food instructions (locked)
+  static const String step5FoodTitle = 'توقيت التناول بالنسبة للأكل (مقفل 🔒)';
+  static const String foodAfter = 'بعد الأكل مباشرة (مع وجبة طعام)';
+  static const String foodBefore = 'قبل الأكل (على معدة فارغة بـ 30 دقيقة)';
   static const String keywordBefore = 'قبل';
-  static const String foodWith = 'مع الأكل';
-  static const String foodBedtime = 'قبل النوم مباشرة';
+  static const String foodWith = 'مع الأكل أثناء الوجبة';
+  static const String foodBedtime = 'قبل النوم مباشرة مع كوب ماء';
 
-  // Collapsible Advanced Section
-  static const String advancedOptionsToggle = 'خيارات إضافية (اختياري)';
-  static const String pillsPerDoseField = 'كم حبة في الجرعة الواحدة؟';
+  // Advanced Section & Profile
+  static const String advancedOptionsToggle = 'خيارات إضافية للمخزون والتنبيه';
   static const String lowStockAlertField = 'تنبيه النقص عندما يتبقى في العلبة:';
   static const String medicineShapeField = 'شكل الدواء:';
-  static const String activeIngredientField = 'المادة الفعالة (الاسم العلمي):';
-  static const String activeIngredientHint = 'مثال: Paracetamol, Metformin';
-  static const String colorSelectionField = 'اختر لوناً مميزاً للدواء:';
+  static const String colorSelectionField = 'اللون المخصص للدواء:';
 
-  static const String saveMedicineBtn = 'حفظ الدواء في صيدليتي ✓';
-  static const String updateMedicineBtn = 'حفظ التعديلات ✓';
+  static const String saveMedicineBtn = 'حفظ وتفعيل الجدول الدوائي الآمن ✓';
+  static const String updateMedicineBtn = 'حفظ التعديلات والتحديث ✓';
+  static const String selectDrugRequired = 'يرجى اختيار الدواء من الموسوعة المعتمدة أولاً';
 
   // Medicine Forms & Types
   static const String typePainkillerLabel = 'مسكن ألم (عند اللزوم)';
@@ -498,9 +506,10 @@ class Ar {
       'تم إنشاء هذا التقرير آلياً عبر تطبيق «دوائي»';
 
   // Doctor A4 Official Report
-  static const String reportA4HeaderTitle = 'تقرير المتابعة السريرية والالتزام بالدواء';
-  static const String reportA4SubTitle = 'CLINICAL MEDICATION & ADHERENCE REPORT';
-  static const String reportA4SystemName = 'منظومة دوائي للرعاية الصحية';
+  static const String reportA4HeaderTitle = 'تقرير المتابعة والالتزام بالدواء';
+  static const String reportA4SubTitle =
+      'CLINICAL MEDICATION & ADHERENCE REPORT';
+  static const String reportA4SystemName = ' دوائي للرعاية الصحية';
   static const String reportBtnDownloadPdf = 'تحميل PDF';
   static const String reportBtnDownloadImage = 'حفظ كصورة';
   static const String reportBtnPrint = 'طباعة';
@@ -518,20 +527,23 @@ class Ar {
   static const String reportStatusGood = 'منتظم';
   static const String reportStatusLow = 'مخزون منخفض';
   static const String reportStatusAsNeeded = 'عند اللزوم';
-  static const String reportPainHistory = 'سجل نوبات الألم وتناول المسكنات الطارئة';
+  static const String reportPainHistory =
+      'سجل نوبات الألم وتناول المسكنات الطارئة';
   static const String reportNoPainLogged =
       'لا توجد نوبات ألم مسجلة في السجل الأخير (حالة المريض مستقرة).';
   static const String reportColTime = 'التاريخ والوقت';
   static const String reportColMed = 'المسكن';
   static const String reportColSeverity = 'الشدة';
   static const String reportColLocation = 'الموضع / السبب';
-  static const String reportDoctorNotesTitle = 'ملاحظات وتوصيات الطبيب المعالج:';
+  static const String reportDoctorNotesTitle =
+      'ملاحظات وتوصيات الطبيب المعالج:';
   static const String reportDoctorSignatureLabel = 'توقيع الطبيب المعالج:';
   static const String reportDoctorStampLabel = 'الختم الرسمي للمركز / العيادة:';
   static const String reportFooterConfidential =
       'وثيقة توثيق دوائي رقمية مولدة آلياً عبر منصة دوائي - مخصصة للمراجعة السريرية لدى الطبيب المعالج.';
   static const String reportPdfSaving = 'جارٍ إعداد ملف PDF الرسمي...';
-  static const String reportImageSaving = 'جارٍ حفظ صورة التقرير عالية الدقة...';
+  static const String reportImageSaving =
+      'جارٍ حفظ صورة التقرير عالية الدقة...';
   static const String reportPdfSavedSuccess = 'تم إعداد ملف PDF بنجاح!';
   static const String reportImageSavedSuccess =
       'تم حفظ صورة التقرير بنجاح في مجلد التنزيلات (Downloads)!';

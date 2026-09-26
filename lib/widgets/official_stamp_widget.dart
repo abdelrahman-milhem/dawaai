@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Official Gold Standard Stamp Widget (الختم الذهبي المعتمد لمنظومة دوائي - رقم 6)
+/// Official Gold Standard Stamp Widget (الختم الذهبي المعتمد ل دوائي - رقم 6)
 /// مصمم وفق المعايير الطبية السحابية المستقلة المتوافقة مع أنظمة الخصوصية الصحية.
 class OfficialStampWidget extends StatelessWidget {
   final Color stampColor;
@@ -13,8 +13,10 @@ class OfficialStampWidget extends StatelessWidget {
 
   const OfficialStampWidget({
     super.key,
-    this.stampColor = const Color(0xFFB45309), // Amber Gold (الذهبي الملكي المعتمد)
-    this.clinicName = 'منظومة دوائي للرعاية السريرية',
+    this.stampColor = const Color(
+      0xFFB45309,
+    ), // Amber Gold (الذهبي الملكي المعتمد)
+    this.clinicName = ' دوائي للرعاية الطبية',
     this.doctorName = '',
     this.refCode = 'DWA-CLINICAL',
     this.scale = 1.0,
@@ -24,7 +26,7 @@ class OfficialStampWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveClinic = clinicName.trim().isEmpty
-        ? 'منظومة دوائي للرعاية السريرية'
+        ? ' دوائي للرعاية الصحية'
         : clinicName.trim();
 
     final stamp = Container(
@@ -112,22 +114,13 @@ class OfficialStampWidget extends StatelessWidget {
 
                 // Gold Standard Certification Ribbon
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 0.8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 0.8,
+                  ),
                   decoration: BoxDecoration(
                     color: stampColor,
                     borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: Text(
-                    'VERIFIED DIGITAL HEALTH RECORD • توثيق رقمي',
-                    style: GoogleFonts.outfit(
-                      fontSize: 5.0,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 0.2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(height: 1.5),
@@ -136,7 +129,7 @@ class OfficialStampWidget extends StatelessWidget {
                 Text(
                   doctorName.isNotEmpty
                       ? 'د. $doctorName • $refCode'
-                      : 'توثيق سريري معتمد • $refCode',
+                      : 'توثيق معتمد • $refCode',
                   style: GoogleFonts.cairo(
                     fontSize: 5.8,
                     fontWeight: FontWeight.bold,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../models/medicine.dart';
+import '../models/drug_info.dart';
 import '../models/user_profile.dart';
 import '../services/storage_service.dart';
 import '../services/reminder_service.dart';
@@ -58,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() {});
   }
 
-  void _openAddMedicineSheet([Medicine? existing]) {
+  void _openAddMedicineSheet([Medicine? existing, DrugInfo? initialDrug]) {
     final activeId = widget.storageService.getActiveProfileId();
     final profiles = widget.storageService.getProfiles();
 
@@ -68,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddMedicineSheet(
         initialMedicine: existing,
+        initialDrugInfo: initialDrug,
         currentProfileId: activeId,
         profiles: profiles,
         onSave: (med) async {
@@ -113,34 +115,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (result != null) {
       if (result.drug != null) {
-        final drug = result.drug!;
-        final newMed = Medicine(
-          id: 'med_${DateTime.now().millisecondsSinceEpoch}',
-          name: drug.tradeName,
-          type: drug.type,
-          form: drug.defaultForm,
-          totalPills: 30,
-          pillsPerDose: 1,
-          lowStockThreshold: 5,
-          instructions: drug.instructions,
-          intervalHours: drug.defaultIntervalHours,
-          minSafeIntervalHours: drug.defaultIntervalHours,
-          activeIngredient: drug.genericName,
-          colorValue: drug.isRare
-              ? 0xFF8B5CF6
-              : (drug.type == MedicineType.painkiller
-                    ? 0xFFEF4444
-                    : 0xFF0D9488),
-        );
-        _openAddMedicineSheet(newMed);
+        _openAddMedicineSheet(null, result.drug!);
       } else {
-        final newMed = Medicine(
-          id: 'med_${DateTime.now().millisecondsSinceEpoch}',
-          name: 'دواء جديد (${result.barcode})',
-          type: MedicineType.treatment,
-          totalPills: 30,
-        );
-        _openAddMedicineSheet(newMed);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'الباركود (${result.barcode}) غير مسجل بالموسوعة. يرجى اختيار الدواء من الموسوعة.',
+              ),
+              backgroundColor: const Color(0xFFD97706),
+            ),
+          );
+          _openAddMedicineSheet();
+        }
       }
     }
   }

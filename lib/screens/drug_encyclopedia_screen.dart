@@ -242,7 +242,7 @@ class _DrugEncyclopediaScreenState extends State<DrugEncyclopediaScreen> {
             ),
           ),
 
-          // Custom Add Banner (User is NOT forced to choose from database)
+          // Verified Encyclopedia Safety Banner
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -256,7 +256,7 @@ class _DrugEncyclopediaScreenState extends State<DrugEncyclopediaScreen> {
             child: Row(
               children: [
                 Icon(
-                  Icons.edit_note_rounded,
+                  Icons.verified_user_rounded,
                   color: theme.colorScheme.primary,
                   size: 22,
                 ),
@@ -266,14 +266,14 @@ class _DrugEncyclopediaScreenState extends State<DrugEncyclopediaScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        Ar.customAddPromptTitle,
+                        'موسوعة معتمدة للسلامة الدوائية',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12.5,
                         ),
                       ),
                       Text(
-                        Ar.customAddPromptDesc,
+                        'جميع الإضافات مقيدة ببيانات الموسوعة لضمان الجرعات الآمنة والمواعيد الدقيقة.',
                         style: TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                     ],
@@ -282,7 +282,7 @@ class _DrugEncyclopediaScreenState extends State<DrugEncyclopediaScreen> {
                 TextButton(
                   onPressed: widget.onOpenCustomAdd,
                   child: const Text(
-                    Ar.customAddBtnShort,
+                    'إضافة علاج',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),

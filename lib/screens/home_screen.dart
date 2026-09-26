@@ -227,13 +227,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openDoctorReportSheet() {
     final activeProfile = widget.storageService.getActiveProfile();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => DoctorReportSheet(
-        storageService: widget.storageService,
-        profile: activeProfile,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (ctx) => DoctorReportSheet(
+          storageService: widget.storageService,
+          profile: activeProfile,
+        ),
       ),
     );
   }

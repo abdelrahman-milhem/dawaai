@@ -11,6 +11,7 @@ import 'package:dawaai/services/storage_service.dart';
 import 'package:dawaai/services/reminder_service.dart';
 import 'package:dawaai/data/drug_database.dart';
 import 'package:dawaai/widgets/doctor_report_sheet.dart';
+import 'package:dawaai/widgets/official_stamp_widget.dart';
 
 void main() {
   setUpAll(() {
@@ -552,14 +553,8 @@ void main() {
     expect(find.text(profile.name), findsOneWidget);
     expect(find.text('بانادول إكسترا'), findsOneWidget);
 
-    // Verify Stamp Customizer Button exists and opens
-    expect(find.text('تخصيص الختم'), findsOneWidget);
-    await tester.tap(find.text('تخصيص الختم'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
-
-    expect(find.text('اختيار وتخصيص الختم الرسمي'), findsOneWidget);
-    expect(find.text('الختم الدائري الملكي'), findsOneWidget);
-    expect(find.text('ختم الاعتماد الأمني'), findsOneWidget);
+    // Verify Official Stamp #6 is rendered on the document
+    expect(find.byType(OfficialStampWidget), findsOneWidget);
+    expect(find.text('DAWAAI CLINICAL EXCELLENCE'), findsOneWidget);
   });
 }

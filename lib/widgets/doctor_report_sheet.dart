@@ -42,23 +42,6 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
   bool _isGeneratingImage = false;
   bool _isPrinting = false;
 
-  void _openStampCustomizer() {
-    final refCode =
-        'DWA-${widget.profile.id.hashCode.abs().toString().padLeft(5, '0')}';
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => OfficialStampCustomizerSheet(
-        storageService: widget.storageService,
-        refCode: refCode,
-        onStampChanged: () {
-          if (mounted) setState(() {});
-        },
-      ),
-    );
-  }
-
   void _showToast(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -447,37 +430,6 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
             ),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: ElevatedButton.icon(
-              onPressed: _openStampCustomizer,
-              icon: const Icon(Icons.approval_rounded, size: 17),
-              label: Text(
-                'تخصيص الختم',
-                style: GoogleFonts.cairo(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    const Color(0xFF0D9488).withValues(alpha: 0.12),
-                foregroundColor: const Color(0xFF0D9488),
-                elevation: 0,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: const BorderSide(
-                    color: Color(0xFF0D9488),
-                    width: 0.8,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -685,11 +637,8 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
     final qrPayload =
         'DAWAAI-CLINICAL|PATIENT:${widget.profile.name}|REF:$refCode|DATE:${now.toIso8601String()}|MEDS:${medicines.length}|LOGS:${logs.length}';
 
-    final stampStyleId = widget.storageService.getDoctorReportStampStyle();
-    final stampColorValue = widget.storageService.getDoctorReportStampColor();
     final stampClinic = widget.storageService.getDoctorReportStampClinic();
     final stampDoctor = widget.storageService.getDoctorReportStampDoctor();
-    final stampStyleOption = OfficialStampsCatalog.getStyleById(stampStyleId);
 
     int scheduledDosesExpected = 0;
     for (final med in medicines) {
@@ -1628,24 +1577,14 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
 
                         const SizedBox(width: 16),
 
-                        // Official Clinic Stamp Box - Clickable with Live Authentic Stamp!
-                        GestureDetector(
-                          onTap: _openStampCustomizer,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            child: Tooltip(
-                              message: 'اضغط لتغيير شكل ولون الختم الرسمي',
-                              child: OfficialStampWidget(
-                                styleType: stampStyleOption.type,
-                                stampColor: Color(stampColorValue),
-                                clinicName: stampClinic,
-                                doctorName: stampDoctor,
-                                refCode: refCode,
-                                scale: 1.0,
-                                enableRotation: true,
-                              ),
-                            ),
-                          ),
+                        // Official Clinic Stamp Box - Gold Standard Seal #6
+                        OfficialStampWidget(
+                          stampColor: const Color(0xFFB45309), // Amber Gold
+                          clinicName: stampClinic,
+                          doctorName: stampDoctor,
+                          refCode: refCode,
+                          scale: 1.0,
+                          enableRotation: true,
                         ),
                       ],
                     ),

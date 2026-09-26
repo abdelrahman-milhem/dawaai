@@ -529,7 +529,7 @@ class Ar {
   static const String reportDoctorSignatureLabel = 'توقيع الطبيب المعالج:';
   static const String reportDoctorStampLabel = 'الختم الرسمي للمركز / العيادة:';
   static const String reportFooterConfidential =
-      'وثيقة طبية سرية - تم توليدها آلياً عبر منصة دوائي - صالحة للمراجعة السريرية الرسمية.';
+      'وثيقة توثيق دوائي رقمية مولدة آلياً عبر منصة دوائي - مخصصة للمراجعة السريرية لدى الطبيب المعالج.';
   static const String reportPdfSaving = 'جارٍ إعداد ملف PDF الرسمي...';
   static const String reportImageSaving = 'جارٍ حفظ صورة التقرير عالية الدقة...';
   static const String reportPdfSavedSuccess = 'تم إعداد ملف PDF بنجاح!';

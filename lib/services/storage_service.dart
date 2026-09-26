@@ -1043,7 +1043,7 @@ class StorageService extends ChangeNotifier {
   static const String _keyDoctorReportStampDoctor = 'dawaai_stamp_doctor_v1';
 
   String getDoctorReportStampStyle() {
-    return _prefs.getString(_keyDoctorReportStampStyle) ?? 'circular_royal';
+    return _prefs.getString(_keyDoctorReportStampStyle) ?? 'gold_excellence'; // Stamp #6 default
   }
 
   Future<void> setDoctorReportStampStyle(String style) async {
@@ -1052,7 +1052,7 @@ class StorageService extends ChangeNotifier {
   }
 
   int getDoctorReportStampColor() {
-    return _prefs.getInt(_keyDoctorReportStampColor) ?? 0xFF1D4ED8; // Royal Blue default
+    return _prefs.getInt(_keyDoctorReportStampColor) ?? 0xFFB45309; // Amber Gold default
   }
 
   Future<void> setDoctorReportStampColor(int colorValue) async {

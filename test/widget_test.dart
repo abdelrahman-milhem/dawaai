@@ -541,12 +541,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Verify Title and Actions
+    // Verify Title and Bottom Actions
     expect(find.text(Ar.reportA4HeaderTitle), findsAtLeastNWidgets(1));
     expect(find.text(Ar.reportBtnDownloadPdf), findsOneWidget);
     expect(find.text(Ar.reportBtnDownloadImage), findsOneWidget);
-    expect(find.text(Ar.reportBtnPrint), findsOneWidget);
-    expect(find.text(Ar.reportBtnCopy), findsOneWidget);
+    expect(find.byIcon(Icons.print_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.copy_rounded), findsOneWidget);
 
     // Verify Patient & Medicine details on A4 paper
     expect(find.text(profile.name), findsOneWidget);

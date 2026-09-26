@@ -42,13 +42,13 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
   bool _isGeneratingPdf = false;
   bool _isGeneratingImage = false;
   bool _isPrinting = false;
-  double _currentScale = 0.45;
+  double _fitScale = 0.45;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fitToWidth();
+      _initFittedScale();
     });
   }
 
@@ -58,33 +58,16 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
     super.dispose();
   }
 
-  void _fitToWidth() {
+  void _initFittedScale() {
     if (!mounted) return;
     final screenWidth = MediaQuery.of(context).size.width;
-    final calculatedScale = ((screenWidth - 32) / 826).clamp(0.35, 1.2);
+    // Exactly 100% full screen width: 0 black margin on sides
+    final scale = screenWidth / 794.0;
     setState(() {
-      _currentScale = calculatedScale;
+      _fitScale = scale;
     });
     _transformationController.value =
-        Matrix4.diagonal3Values(calculatedScale, calculatedScale, 1.0);
-  }
-
-  void _zoomIn() {
-    final newScale = (_currentScale + 0.2).clamp(0.35, 2.5);
-    setState(() => _currentScale = newScale);
-    _transformationController.value =
-        Matrix4.diagonal3Values(newScale, newScale, 1.0);
-  }
-
-  void _zoomOut() {
-    final newScale = (_currentScale - 0.2).clamp(0.35, 2.5);
-    setState(() => _currentScale = newScale);
-    _transformationController.value =
-        Matrix4.diagonal3Values(newScale, newScale, 1.0);
-  }
-
-  void _zoomReset() {
-    _fitToWidth();
+        Matrix4.diagonal3Values(scale, scale, 1.0);
   }
 
   void _showToast(String message, {bool isError = false}) {
@@ -109,7 +92,6 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
 
   Future<Uint8List?> _captureA4Raster() async {
     try {
-      // 1. Give the UI time to finish any state changes & paint completely
       await Future.delayed(const Duration(milliseconds: 120));
 
       final boundary =
@@ -119,7 +101,6 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
         return null;
       }
 
-      // 2. If it still needs paint, wait a small frame
       if (boundary.debugNeedsPaint) {
         await Future.delayed(const Duration(milliseconds: 120));
       }
@@ -157,7 +138,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
       await file.writeAsBytes(bytes, flush: true);
       return file.path;
     } catch (e) {
-      debugPrint('Direct storage write failed (scoped storage): $e');
+      debugPrint('Direct storage write error: $e');
       try {
         final appDir = await getApplicationDocumentsDirectory();
         final file = File('${appDir.path}/$filename');
@@ -476,7 +457,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'A4 Medical Document • 100% مجاني بدون إنترنت',
+                        'اسحب للتكبير بأصابعك • لا يمكن تصغيرها عن 100%',
                         style: GoogleFonts.cairo(
                           fontSize: 11,
                           color: theme.textTheme.bodyMedium?.color?.withValues(
@@ -496,31 +477,71 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
-          // Action Toolbar (Download PDF, Save Image, Print, Copy)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+          // Seamless Canvas holding the centered A4 Paper (0 black margins)
+          Expanded(
             child: Container(
-              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
+                color: theme.scaffoldBackgroundColor,
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: InteractiveViewer(
+                transformationController: _transformationController,
+                minScale: _fitScale,
+                maxScale: _fitScale * 3.5,
+                boundaryMargin: EdgeInsets.zero,
+                constrained: false,
+                clipBehavior: Clip.hardEdge,
+                child: RepaintBoundary(
+                  key: _a4Key,
+                  child: _buildA4Paper(
+                    context,
+                    now,
+                    medicines,
+                    logs,
+                    painLogs,
+                    recentLogs,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Bottom Action Bar (Fixed at the bottom as requested)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+              border: Border(
+                top: BorderSide(
                   color: theme.dividerColor.withValues(alpha: 0.2),
                 ),
               ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    // Download PDF Button
-                    ElevatedButton.icon(
+            ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  // 1. Download as PDF Button
+                  Expanded(
+                    flex: 5,
+                    child: ElevatedButton.icon(
                       onPressed: _isGeneratingPdf ? null : _downloadPdf,
                       icon: _isGeneratingPdf
                           ? const SizedBox(
-                              width: 16,
-                              height: 16,
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
@@ -528,37 +549,37 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                             )
                           : const Icon(
                               Icons.picture_as_pdf_rounded,
-                              size: 18,
+                              size: 20,
                             ),
                       label: Text(
                         Ar.reportBtnDownloadPdf,
                         style: GoogleFonts.cairo(
                           fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
+                          fontSize: 13.5,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0D9488),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        elevation: 0,
+                        elevation: 1,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                  ),
+                  const SizedBox(width: 8),
 
-                    // Save as Image Button
-                    ElevatedButton.icon(
+                  // 2. Save as Image Button
+                  Expanded(
+                    flex: 5,
+                    child: ElevatedButton.icon(
                       onPressed: _isGeneratingImage ? null : _downloadImage,
                       icon: _isGeneratingImage
                           ? const SizedBox(
-                              width: 16,
-                              height: 16,
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
@@ -566,191 +587,77 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                             )
                           : const Icon(
                               Icons.image_rounded,
-                              size: 18,
+                              size: 20,
                             ),
                       label: Text(
                         Ar.reportBtnDownloadImage,
                         style: GoogleFonts.cairo(
                           fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
+                          fontSize: 13.5,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4F46E5),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        elevation: 0,
+                        elevation: 1,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Print Button
-                    OutlinedButton.icon(
-                      onPressed: _isPrinting ? null : _printReport,
-                      icon: _isPrinting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.print_rounded,
-                              size: 18,
-                            ),
-                      label: Text(
-                        Ar.reportBtnPrint,
-                        style: GoogleFonts.cairo(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF0D9488),
-                        side: const BorderSide(
-                          color: Color(0xFF0D9488),
-                          width: 1.3,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Copy Text Button
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final reportText = _generateReportText(
-                          now,
-                          medicines,
-                          logs,
-                          painLogs,
-                          recentLogs,
-                        );
-                        await Clipboard.setData(
-                          ClipboardData(text: reportText),
-                        );
-                        _showToast(Ar.reportCopiedSuccess);
-                      },
-                      icon: const Icon(Icons.copy_rounded, size: 16),
-                      label: Text(
-                        Ar.reportBtnCopy,
-                        style: GoogleFonts.cairo(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // Zoom & View Controls Toolbar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.touch_app_rounded,
-                  size: 14,
-                  color: theme.textTheme.bodyMedium?.color?.withValues(
-                    alpha: 0.6,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'اسحب للتنقل أو استخدم إيماءة التكبير',
-                  style: GoogleFonts.cairo(
-                    fontSize: 11,
-                    color: theme.textTheme.bodyMedium?.color?.withValues(
-                      alpha: 0.6,
                     ),
                   ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: _zoomOut,
-                  icon: const Icon(Icons.zoom_out_rounded, size: 20),
-                  tooltip: 'تصغير',
-                  visualDensity: VisualDensity.compact,
-                ),
-                Text(
-                  '${(_currentScale * 100).toInt()}%',
-                  style: GoogleFonts.cairo(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  onPressed: _zoomIn,
-                  icon: const Icon(Icons.zoom_in_rounded, size: 20),
-                  tooltip: 'تكبير',
-                  visualDensity: VisualDensity.compact,
-                ),
-                IconButton(
-                  onPressed: _zoomReset,
-                  icon: const Icon(Icons.fit_screen_rounded, size: 18),
-                  tooltip: 'ملء الشاشة',
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ),
-          ),
+                  const SizedBox(width: 6),
 
-          // Workspace Canvas holding the centered realistic A4 Paper
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(top: 4),
-              decoration: BoxDecoration(
-                color: theme.brightness == Brightness.dark
-                    ? const Color(0xFF0F172A)
-                    : const Color(0xFFE2E8F0),
-              ),
-              child: InteractiveViewer(
-                transformationController: _transformationController,
-                minScale: 0.25,
-                maxScale: 2.8,
-                boundaryMargin: const EdgeInsets.all(80),
-                constrained: false,
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: RepaintBoundary(
-                    key: _a4Key,
-                    child: _buildA4Paper(
-                      context,
-                      now,
-                      medicines,
-                      logs,
-                      painLogs,
-                      recentLogs,
+                  // 3. Direct Print Icon Button
+                  IconButton(
+                    onPressed: _isPrinting ? null : _printReport,
+                    icon: _isPrinting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(
+                            Icons.print_rounded,
+                            color: Color(0xFF0D9488),
+                            size: 22,
+                          ),
+                    tooltip: Ar.reportBtnPrint,
+                    style: IconButton.styleFrom(
+                      backgroundColor:
+                          const Color(0xFF0D9488).withValues(alpha: 0.1),
+                      padding: const EdgeInsets.all(10),
                     ),
                   ),
-                ),
+
+                  // 4. Copy Text Icon Button
+                  IconButton(
+                    onPressed: () async {
+                      final reportText = _generateReportText(
+                        now,
+                        medicines,
+                        logs,
+                        painLogs,
+                        recentLogs,
+                      );
+                      await Clipboard.setData(
+                        ClipboardData(text: reportText),
+                      );
+                      _showToast(Ar.reportCopiedSuccess);
+                    },
+                    icon: const Icon(
+                      Icons.copy_rounded,
+                      size: 20,
+                    ),
+                    tooltip: Ar.reportBtnCopy,
+                    style: IconButton.styleFrom(
+                      backgroundColor:
+                          Colors.grey.withValues(alpha: 0.12),
+                      padding: const EdgeInsets.all(10),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -795,18 +702,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
         child: Container(
           width: 794,
           height: 1123,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(4),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 18,
-                spreadRadius: 3,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
+          color: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

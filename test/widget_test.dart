@@ -10,6 +10,7 @@ import 'package:dawaai/models/home_pharmacy.dart';
 import 'package:dawaai/services/storage_service.dart';
 import 'package:dawaai/services/reminder_service.dart';
 import 'package:dawaai/data/drug_database.dart';
+import 'package:dawaai/widgets/doctor_report_sheet.dart';
 
 void main() {
   setUpAll(() {
@@ -511,5 +512,44 @@ void main() {
     final retrievedPharm = storage.getActiveHomePharmacy();
     expect(retrievedPharm, isNotNull);
     expect(retrievedPharm!.items.any((i) => i.name == 'أوميغا 3 بلس' && i.quantity == 60), isTrue);
+  });
+
+  testWidgets('DoctorReportSheet renders authentic A4 document with export buttons', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final storage = await StorageService.init();
+    final profile = storage.getActiveProfile();
+
+    final testMed = Medicine(
+      id: 'doc_med_1',
+      name: 'بانادول إكسترا',
+      type: MedicineType.painkiller,
+      totalPills: 24,
+      pillsPerDose: 2,
+    );
+    await storage.addMedicine(testMed);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DoctorReportSheet(
+            storageService: storage,
+            profile: profile,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Verify Title and Actions
+    expect(find.text(Ar.reportA4HeaderTitle), findsAtLeastNWidgets(1));
+    expect(find.text(Ar.reportBtnDownloadPdf), findsOneWidget);
+    expect(find.text(Ar.reportBtnDownloadImage), findsOneWidget);
+    expect(find.text(Ar.reportBtnPrint), findsOneWidget);
+    expect(find.text(Ar.reportBtnCopy), findsOneWidget);
+
+    // Verify Patient & Medicine details on A4 paper
+    expect(find.text(profile.name), findsOneWidget);
+    expect(find.text('بانادول إكسترا'), findsOneWidget);
   });
 }

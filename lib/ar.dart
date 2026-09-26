@@ -9,10 +9,10 @@ class Ar {
   static const String appTagline = 'صحتك أولويتنا، استمر في الانتظام';
 
   // Navigation Bar
-  static const String navToday = 'الجرعات';
+  static const String navToday = 'جدول الجرعات';
   static const String navMedicines = 'أدويتي';
   static const String navPharmacy = 'صيدليتي';
-  static const String navHistory = 'سجل الالتزام';
+  static const String navHistory = 'ملفي الطبي';
   // kept for compat
   static const String navPainkillers = 'أدويتي';
   static const String navStock = 'صيدليتي';
@@ -22,7 +22,7 @@ class Ar {
   static const String encyclopediaMenu = 'موسوعة وبحث الأدوية الشامل';
   static const String interactionsMenu = 'فاحص التعارضات الطبية';
   static const String doctorReportMenu = 'تقرير الطبيب ومشاركته';
-  static const String familyProfilesMenu = 'ملفات العائلة والوالدين';
+  static const String familyProfilesMenu = 'ملفات العائلة';
   static const String darkMode = 'الوضع الليلي';
   static const String lightMode = 'الوضع النهاري';
   static const String notificationsCenterTitle = 'مركز الإشعارات والتذكيرات';
@@ -70,7 +70,8 @@ class Ar {
 
   // Next Dose Only strings (الجرعة التالية لكل دواء)
   static const String nextDosesOnlyTitle = 'الجرعة القادمة لكل دواء';
-  static const String nextDosesOnlySubtitle = 'تظهر فقط الجرعة التالية؛ وبمجرد أخذها ينتقل الموعد فوراً للتالي';
+  static const String nextDosesOnlySubtitle =
+      'تظهر فقط الجرعة التالية؛ وبمجرد أخذها ينتقل الموعد فوراً للتالي';
   static const String nextDoseBadge = 'الجرعة القادمة';
   static const String takeDoseInstantBtn = 'أخذت الجرعة';
   static const String allDosesDoneForToday = 'اكتملت جرعات اليوم لهذا الدواء ✓';
@@ -81,7 +82,8 @@ class Ar {
 
   // My Medicines Tab (أدويتي - كل أدوية المستخدم)
   static const String myMedicinesTabTitle = 'أدويتي';
-  static const String myMedicinesSubtitle = 'جميع الأدوية المسجلة مع إمكانية الإضافة والحذف';
+  static const String myMedicinesSubtitle =
+      'جميع الأدوية المسجلة مع إمكانية الإضافة والحذف';
   static const String myMedicinesCount = 'دواء مسجل';
   static String myMedicinesCountLabel(int count) => '$count دواء مسجل';
   static const String noMedicinesYetTitle = 'لا توجد أدوية مسجلة بعد';
@@ -152,8 +154,10 @@ class Ar {
 
   // Futuristic Home Pharmacy & Shared Household Inventory (صيدلية المنزل الذكية المتصلة)
   static const String homePharmacyFuturisticTitle = 'صيدلية المنزل الذكية';
-  static const String homePharmacyFuturisticSubtitle = 'خزانة أدوية البيت المشتركة بين أفراد المنزل';
-  static const String connectedToHomeNetwork = 'متصل بالشبكة المنزلية • صيدلية سحابية نشطة';
+  static const String homePharmacyFuturisticSubtitle =
+      'خزانة أدوية البيت المشتركة بين أفراد المنزل';
+  static const String connectedToHomeNetwork =
+      'متصل بالشبكة المنزلية • صيدلية سحابية نشطة';
   static const String homePharmacyId = 'معرف الصيدلية (ID)';
   static const String homePharmacyPassword = 'رمز الأمان / كلمة السر';
   static const String copyCredentialsBtn = 'نسخ بيانات الصيدلية';
@@ -174,21 +178,28 @@ class Ar {
   static const String locationFirstAidDefault = 'حقيبة الإسعافات الأولية';
   static const String locationRoomDefault = 'درج الغرفة / مكان آخر';
   static const String joinedSuccessAlert = 'تم الانضمام لصيدلية المنزل بنجاح!';
-  static const String createdSuccessAlert = 'تم إنشاء صيدلية المنزل الذكية بنجاح!';
-  static const String invalidCredentialsAlert = 'عذراً! معرف الصيدلية أو كلمة السر غير صحيحة.';
+  static const String createdSuccessAlert =
+      'تم إنشاء صيدلية المنزل الذكية بنجاح!';
+  static const String invalidCredentialsAlert =
+      'عذراً! معرف الصيدلية أو كلمة السر غير صحيحة.';
   static const String joinHomeHeaderTitle = 'انضم إلى صيدلية منزلك 🏠';
-  static const String joinHomeHeaderSubtitle = 'أدخل المعرف وكلمة السر لتتشارك أنت وأفراد أسرتك مخزون أدوية البيت وتعرفوا ما يتوفر بالمنزل';
+  static const String joinHomeHeaderSubtitle =
+      'أدخل المعرف وكلمة السر لتتشارك أنت وأفراد أسرتك مخزون أدوية البيت وتعرفوا ما يتوفر بالمنزل';
   static const String joinPharmacyDialogDesc =
       'أدخل معرف صيدلية البيت وكلمة السر المقدمة من مدير الخزانة أو أحد أفراد المنزل';
   static const String createHomeHeaderTitle = 'إنشاء صيدلية منزل جديدة 💊';
-  static const String createHomeHeaderSubtitle = 'أنشئ خزانة ذكية لبيتك وشارك المعرف ورمز المرور مع عائلتك';
+  static const String createHomeHeaderSubtitle =
+      'أنشئ خزانة ذكية لبيتك وشارك المعرف ورمز المرور مع عائلتك';
   static const String createPharmacyDialogDesc =
       'أنشئ خزانة منزلية ذكية خاصة ببيتك وشارك معرفها وكلمة سرها مع أفراد منزلك';
-  static const String pharmacyNameInputLabel = 'اسم صيدلية المنزل (مثلاً: بيت العائلة)';
+  static const String pharmacyNameInputLabel =
+      'اسم صيدلية المنزل (مثلاً: بيت العائلة)';
   static const String pharmacyIdInputLabel = 'معرف الصيدلية (Pharmacy ID)';
   static const String pharmacyPasswordInputLabel = 'كلمة السر / رمز الدخول';
-  static const String memberNameInputLabel = 'اسمك بالمنزل (مثلاً: أحمد، سارة، الوالد)';
-  static const String copiedToClipboard = 'تم نسخ المعرف وكلمة السر إلى الحافظة بنجاح!';
+  static const String memberNameInputLabel =
+      'اسمك بالمنزل (مثلاً: أحمد، سارة، الوالد)';
+  static const String copiedToClipboard =
+      'تم نسخ المعرف وكلمة السر إلى الحافظة بنجاح!';
   static String shareHomeInviteText(String name, String id, String pass) =>
       'انضم إلى صيدلية منزلنا "$name" في تطبيق دوائي لمتابعة أدوية البيت المشتركة!\n🔑 معرف الصيدلية (ID): $id\n🔒 كلمة السر: $pass';
 
@@ -245,7 +256,8 @@ class Ar {
       'تحذير: تجاوزت الحد الأقصى اليومي ($maxDailyDoses جرعات). لا ينصح بتناول جرعة إضافية.';
   static String cooldownWarning(int mins) =>
       'تحذير طبي: لم ينتهِ الفاصل الآمن بعد ($mins دقيقة متبقية).';
-  static const String earlyIntakeWarningTitle = '⚠️ تحذير طبي: تناول الدواء قبل موعده الآمن';
+  static const String earlyIntakeWarningTitle =
+      '⚠️ تحذير طبي: تناول الدواء قبل موعده الآمن';
   static const String earlyIntakeWarningDesc =
       'تناول الجرعة قبل اكتمال الفاصل الزمني الآمن قد يسبب تراكم المادة الفعالة في الدم وخطر التسمم الدوائي أو المضاعفات الخطيرة.';
   static String earlyIntakeLastDoseInfo(String timeAgoStr, int safeHours) =>
@@ -255,8 +267,11 @@ class Ar {
     if (hours > 0) return '$hours ساعة';
     return '$mins دقيقة';
   }
-  static const String earlyIntakeWaitRecommendation = 'الانتظار حتى الموعد الآمن (موصى به طبياً)';
-  static const String earlyIntakeConfirmOverride = 'أنا على دراية بالخطر، تأكيد التناول الآن';
+
+  static const String earlyIntakeWaitRecommendation =
+      'الانتظار حتى الموعد الآمن (موصى به طبياً)';
+  static const String earlyIntakeConfirmOverride =
+      'أنا على دراية بالخطر، تأكيد التناول الآن';
   static String delayedRescheduledSafeNotice(String newTime, int safeHours) =>
       'تم تأجيل موعد الجرعة التالية تلقائياً إلى $newTime للحفاظ على الفاصل الزمني الآمن ($safeHours ساعات) بعد تأخر الجرعة.';
   static const String safeIntervalEnforcedBadge = 'موعد مصحح للأمان الطبي';
@@ -456,7 +471,7 @@ class Ar {
 
   // Doctor Report Sheet
   static const String reportSheetTitle = 'التقرير الطبي للطبيب / العيادة';
-  static const String shareViaWhatsApp = 'نسخ التقرير لمشاركته (واتساب)';
+  static const String shareViaWhatsApp = 'نسخ التقرير لمشاركته ';
   static const String reportCopiedSuccess =
       '✅ تم نسخ التقرير الطبي بالكامل! يمكنك الآن لصقه في واتساب أو إرساله لطبيبك.';
   static const String reportDocHeader =
@@ -481,6 +496,47 @@ class Ar {
   static const String reportPainSite = 'الموضع:';
   static const String reportAutoGeneratedFooter =
       'تم إنشاء هذا التقرير آلياً عبر تطبيق «دوائي»';
+
+  // Doctor A4 Official Report
+  static const String reportA4HeaderTitle = 'تقرير المتابعة السريرية والالتزام بالدواء';
+  static const String reportA4SubTitle = 'CLINICAL MEDICATION & ADHERENCE REPORT';
+  static const String reportA4SystemName = 'منظومة دوائي للرعاية الصحية';
+  static const String reportBtnDownloadPdf = 'تحميل PDF';
+  static const String reportBtnDownloadImage = 'حفظ كصورة';
+  static const String reportBtnPrint = 'طباعة';
+  static const String reportBtnCopy = 'نسخ النص';
+  static const String reportPatientDetails = 'بيانات المريض والملف';
+  static const String reportPatientRelationship = 'الصلة / القرابة:';
+  static const String reportMedicationsCount = 'عدد الأدوية الحالية:';
+  static const String reportAdherenceRateLabel = 'نسبة الالتزام (7 أيام):';
+  static const String reportDocumentRef = 'رقم الوثيقة:';
+  static const String reportTableColMedName = 'اسم الدواء والنوع';
+  static const String reportTableColDose = 'الجرعة';
+  static const String reportTableColSchedule = 'جدول المواعيد';
+  static const String reportTableColStock = 'المخزون';
+  static const String reportTableColStatus = 'الحالة';
+  static const String reportStatusGood = 'منتظم';
+  static const String reportStatusLow = 'مخزون منخفض';
+  static const String reportStatusAsNeeded = 'عند اللزوم';
+  static const String reportPainHistory = 'سجل نوبات الألم وتناول المسكنات الطارئة';
+  static const String reportNoPainLogged =
+      'لا توجد نوبات ألم مسجلة في السجل الأخير (حالة المريض مستقرة).';
+  static const String reportColTime = 'التاريخ والوقت';
+  static const String reportColMed = 'المسكن';
+  static const String reportColSeverity = 'الشدة';
+  static const String reportColLocation = 'الموضع / السبب';
+  static const String reportDoctorNotesTitle = 'ملاحظات وتوصيات الطبيب المعالج:';
+  static const String reportDoctorSignatureLabel = 'توقيع الطبيب المعالج:';
+  static const String reportDoctorStampLabel = 'الختم الرسمي للمركز / العيادة:';
+  static const String reportFooterConfidential =
+      'وثيقة طبية سرية - تم توليدها آلياً عبر منصة دوائي - صالحة للمراجعة السريرية الرسمية.';
+  static const String reportPdfSaving = 'جارٍ إعداد ملف PDF الرسمي...';
+  static const String reportImageSaving = 'جارٍ حفظ صورة التقرير عالية الدقة...';
+  static const String reportPdfSavedSuccess = 'تم إعداد ملف PDF بنجاح!';
+  static const String reportImageSavedSuccess =
+      'تم حفظ صورة التقرير بنجاح في مجلد التنزيلات (Downloads)!';
+  static const String reportSaveError =
+      'حدث خطأ أثناء حفظ التقرير، يرجى المحاولة ثانية.';
 
   // Refill Dialog
   static const String refillDialogTitle = 'إعادة تعبئة المخزون';
@@ -761,37 +817,49 @@ class Ar {
 
   // Barcode / QR Scanner
   static const String scanBarcodeBtn = 'مسح باركود العلبة';
-  static const String scanBarcodeTooltip = 'مسح الباركود أو رمز الاستجابة السريعة بالكاميرا';
+  static const String scanBarcodeTooltip =
+      'مسح الباركود أو رمز الاستجابة السريعة بالكاميرا';
   static const String scanBarcodeTitle = 'ماسح باركود علبة الدواء';
-  static const String scanBarcodeSubtitle = 'وجّه الكاميرا نحو باركود العلبة (EAN / QR / DataMatrix)';
+  static const String scanBarcodeSubtitle =
+      'وجّه الكاميرا نحو باركود العلبة (EAN / QR / DataMatrix)';
   static const String torchOn = 'تشغيل الإضاءة';
   static const String torchOff = 'إيقاف الإضاءة';
   static const String switchCamera = 'تبديل الكاميرا';
   static const String drugRecognized = 'تم التعرف على الدواء بنجاح!';
-  static const String drugNotRecognized = 'تم قراءة الباركود، ولم يتم العثور على تطابق بالموسوعة';
+  static const String drugNotRecognized =
+      'تم قراءة الباركود، ولم يتم العثور على تطابق بالموسوعة';
   static const String useDrugData = 'استخدام وتعبئة بيانات الدواء فوراً';
   static const String scanAgain = 'مسح علبة أخرى';
   static const String manualBarcodeInput = 'إدخال رقم الباركود يدوياً';
   static const String enterBarcodeDialogTitle = 'إدخال كود الباركود للبحث';
   static const String barcodeFieldHint = 'مثال: 6291003440019';
   static const String searchAndApply = 'بحث ومطابقة';
-  static const String cameraPermissionRequired = 'يرجى تفعيل صلاحية الكاميرا لمسح الباركود';
+  static const String cameraPermissionRequired =
+      'يرجى تفعيل صلاحية الكاميرا لمسح الباركود';
   static const String scannedBarcodeLabel = 'الباركود: ';
 
   // Home Pharmacy QR Sharing & Synchronization
   static const String sharePharmacyQrBtn = 'مشاركة الصيدلية عبر QR';
-  static const String sharePharmacyTooltip = 'مشاركة هذه الصيدلية مع أفراد العائلة عبر رمز QR أو كود المشاركة';
+  static const String sharePharmacyTooltip =
+      'مشاركة هذه الصيدلية مع أفراد العائلة عبر رمز QR أو كود المشاركة';
   static const String pharmacyQrTitle = 'مشاركة صيدلية المنزل';
-  static const String pharmacyQrSubtitle = 'امسح هذا الرمز من هاتف أي فرد بالعائلة للانضمام الفوري ومزامنة المخزون';
+  static const String pharmacyQrSubtitle =
+      'امسح هذا الرمز من هاتف أي فرد بالعائلة للانضمام الفوري ومزامنة المخزون';
   static const String scanPharmacyQrBtn = 'مسح رمز QR للانضمام';
-  static const String scanPharmacyQrSubtitle = 'وجّه الكاميرا نحو رمز QR على هاتف مدير الصيدلية أو أحد أفرادها';
+  static const String scanPharmacyQrSubtitle =
+      'وجّه الكاميرا نحو رمز QR على هاتف مدير الصيدلية أو أحد أفرادها';
   static const String copyPharmacyCodeBtn = 'نسخ كود المشاركة للواتساب';
-  static const String pharmacyCodeCopied = 'تم نسخ كود الصيدلية إلى الحافظة! يمكنك إرساله بالواتساب لأفراد أسرتك.';
+  static const String pharmacyCodeCopied =
+      'تم نسخ كود الصيدلية إلى الحافظة! يمكنك إرساله بالواتساب لأفراد أسرتك.';
   static const String pastePharmacyCodeBtn = 'لصق كود المشاركة';
   static const String pastePharmacyCodeTitle = 'الانضمام عبر كود مشاركة نصي';
-  static const String pastePharmacyCodeHint = 'الصق هنا كود الصيدلية (يبدأ بـ DAWAAI_PHARMACY_V1:)';
+  static const String pastePharmacyCodeHint =
+      'الصق هنا كود الصيدلية (يبدأ بـ DAWAAI_PHARMACY_V1:)';
   static const String pastePharmacyCodeConfirm = 'انضمام ومزامنة الآن';
-  static const String pharmacyImportSuccess = 'تم الانضمام ومزامنة أدوية ومخزون الصيدلية بنجاح!';
-  static const String pharmacyImportFailed = 'رمز الصيدلية غير صالح أو تالف، تأكد من نسخه كاملاً.';
-  static const String pharmacyQrInstructions = '• افتح التطبيق على الهاتف الآخر.\n• اضغط على (مسح رمز QR للانضمام) من تبويب خزانة الأدوية.\n• أو انسخ الكود وأرسله عبر واتساب وسيتم الانضمام بضغطة زر.';
+  static const String pharmacyImportSuccess =
+      'تم الانضمام ومزامنة أدوية ومخزون الصيدلية بنجاح!';
+  static const String pharmacyImportFailed =
+      'رمز الصيدلية غير صالح أو تالف، تأكد من نسخه كاملاً.';
+  static const String pharmacyQrInstructions =
+      '• افتح التطبيق على الهاتف الآخر.\n• اضغط على (مسح رمز QR للانضمام) من تبويب خزانة الأدوية.\n• أو انسخ الكود وأرسله عبر واتساب وسيتم الانضمام بضغطة زر.';
 }

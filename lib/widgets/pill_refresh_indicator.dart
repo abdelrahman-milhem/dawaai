@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -72,12 +73,15 @@ class _PillRefreshIndicatorState extends State<PillRefreshIndicator>
     if (_isRefreshing) return false;
 
     if (notification is ScrollUpdateNotification) {
-      if (notification.metrics.extentBefore == 0 && notification.scrollDelta != null) {
+      if (notification.metrics.extentBefore == 0 &&
+          notification.scrollDelta != null) {
         if (notification.scrollDelta! < 0) {
           // Dragging down at the top
           setState(() {
-            _dragOffset = (_dragOffset - notification.scrollDelta! * 0.5)
-                .clamp(0.0, _maxDragOffset);
+            _dragOffset = (_dragOffset - notification.scrollDelta! * 0.5).clamp(
+              0.0,
+              _maxDragOffset,
+            );
           });
           if (_dragOffset >= _refreshTriggerThreshold && !_hasTriggeredHaptic) {
             HapticFeedback.mediumImpact();
@@ -85,15 +89,20 @@ class _PillRefreshIndicatorState extends State<PillRefreshIndicator>
           }
         } else if (_dragOffset > 0 && notification.scrollDelta! > 0) {
           setState(() {
-            _dragOffset = (_dragOffset - notification.scrollDelta!).clamp(0.0, _maxDragOffset);
+            _dragOffset = (_dragOffset - notification.scrollDelta!).clamp(
+              0.0,
+              _maxDragOffset,
+            );
           });
         }
       }
     } else if (notification is OverscrollNotification) {
       if (notification.overscroll < 0) {
         setState(() {
-          _dragOffset = (_dragOffset - notification.overscroll * 0.5)
-              .clamp(0.0, _maxDragOffset);
+          _dragOffset = (_dragOffset - notification.overscroll * 0.5).clamp(
+            0.0,
+            _maxDragOffset,
+          );
         });
         if (_dragOffset >= _refreshTriggerThreshold && !_hasTriggeredHaptic) {
           HapticFeedback.mediumImpact();
@@ -187,7 +196,9 @@ class _PillRefreshIndicatorState extends State<PillRefreshIndicator>
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E),
+                color: isDark
+                    ? const Color(0xFF5EEAD4)
+                    : const Color(0xFF0F766E),
               ),
             ),
           ],
@@ -229,11 +240,18 @@ class _TiltedHollowPillBorderSpinnerPainter extends CustomPainter {
       width: pillWidth,
       height: pillHeight,
     );
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(pillHeight / 2));
+    final rrect = RRect.fromRectAndRadius(
+      rect,
+      const Radius.circular(pillHeight / 2),
+    );
 
     // 1. 3D Elevation Drop Shadow (floating effect)
     final shadowRRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: const Offset(1.5, 3.0), width: pillWidth, height: pillHeight),
+      Rect.fromCenter(
+        center: const Offset(1.5, 3.0),
+        width: pillWidth,
+        height: pillHeight,
+      ),
       const Radius.circular(pillHeight / 2),
     );
     final shadowPaint = Paint()
@@ -251,8 +269,13 @@ class _TiltedHollowPillBorderSpinnerPainter extends CustomPainter {
         end: Alignment.bottomCenter,
         colors: [
           const Color(0xFFFFFFFF), // Pure bright white top highlight
-          const Color(0xFFF8FAFC), // Crisp white body
-          const Color(0xFFE2E8F0), // Subtle bottom curvature shade for 3D depth
+          const Color.fromARGB(255, 20, 114, 208), // Crisp white body
+          const Color.fromARGB(
+            255,
+            240,
+            236,
+            226,
+          ), // Subtle bottom curvature shade for 3D depth
         ],
         stops: const [0.0, 0.55, 1.0],
       ).createShader(rect);
@@ -274,10 +297,7 @@ class _TiltedHollowPillBorderSpinnerPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [
-          Colors.white,
-          Colors.white.withValues(alpha: 0.0),
-        ],
+        colors: [Colors.white, Colors.white.withValues(alpha: 0.0)],
       ).createShader(rect);
     canvas.drawRRect(rrect, topSpecularPaint);
 
@@ -322,7 +342,10 @@ class _TiltedHollowPillBorderSpinnerPainter extends CustomPainter {
           beamPath = metric.extractPath(start, end);
         } else {
           beamPath.addPath(metric.extractPath(start, totalLength), Offset.zero);
-          beamPath.addPath(metric.extractPath(0, end - totalLength), Offset.zero);
+          beamPath.addPath(
+            metric.extractPath(0, end - totalLength),
+            Offset.zero,
+          );
         }
 
         // Layer A: 3D Soft Outer Bloom Glow
@@ -331,7 +354,8 @@ class _TiltedHollowPillBorderSpinnerPainter extends CustomPainter {
           ..strokeWidth = 5.5
           ..strokeCap = StrokeCap.round
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5)
-          ..color = const Color(0xFF14B8A6).withValues(alpha: isDark ? 0.70 : 0.50);
+          ..color = const Color(0xFF14B8A6)
+              .withValues(alpha: isDark ? 0.70 : 0.50);
         canvas.drawPath(beamPath, glowPaint);
 
         // Layer B: 3D Sharp Core Neon Beam
@@ -344,7 +368,7 @@ class _TiltedHollowPillBorderSpinnerPainter extends CustomPainter {
               Color(0xFF0D9488), // Deep Emerald Tail
               Color(0xFF14B8A6), // Teal
               Color(0xFF38BDF8), // Cyan
-              Colors.white,      // Luminous Highlight Head
+              Colors.white, // Luminous Highlight Head
             ],
           ).createShader(rect);
         canvas.drawPath(beamPath, corePaint);
@@ -369,11 +393,7 @@ class _TiltedHollowPillBorderSpinnerPainter extends CustomPainter {
             ..strokeWidth = 2.6
             ..strokeCap = StrokeCap.round
             ..shader = const LinearGradient(
-              colors: [
-                Color(0xFF14B8A6),
-                Color(0xFF38BDF8),
-                Colors.white,
-              ],
+              colors: [Color(0xFF14B8A6), Color(0xFF38BDF8), Colors.white],
             ).createShader(rect);
           canvas.drawPath(dragPath, dragCorePaint);
         }
@@ -384,12 +404,11 @@ class _TiltedHollowPillBorderSpinnerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _TiltedHollowPillBorderSpinnerPainter oldDelegate) {
+  bool shouldRepaint(
+    covariant _TiltedHollowPillBorderSpinnerPainter oldDelegate,
+  ) {
     return oldDelegate.progress != progress ||
         oldDelegate.isRefreshing != isRefreshing ||
         oldDelegate.primaryColor != primaryColor;
   }
 }
-
-
-

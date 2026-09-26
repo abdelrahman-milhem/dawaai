@@ -4,12 +4,14 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:gal/gal.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../ar.dart';
 import '../models/dose_log.dart';
@@ -107,17 +109,27 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
 
   Future<Uint8List?> _captureA4Raster() async {
     try {
-      await Future.delayed(const Duration(milliseconds: 60));
+      // 1. Give the UI time to finish any state changes & paint completely
+      await Future.delayed(const Duration(milliseconds: 120));
+
       final boundary =
           _a4Key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) return null;
+      if (boundary == null) {
+        debugPrint('RenderRepaintBoundary is null');
+        return null;
+      }
+
+      // 2. If it still needs paint, wait a small frame
+      if (boundary.debugNeedsPaint) {
+        await Future.delayed(const Duration(milliseconds: 120));
+      }
 
       final image = await boundary.toImage(pixelRatio: 2.5);
       final byteData =
           await image.toByteData(format: ui.ImageByteFormat.png);
       return byteData?.buffer.asUint8List();
-    } catch (e) {
-      debugPrint('Error capturing A4 raster: $e');
+    } catch (e, stack) {
+      debugPrint('Error capturing A4 raster: $e\n$stack');
       return null;
     }
   }
@@ -145,7 +157,7 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
       await file.writeAsBytes(bytes, flush: true);
       return file.path;
     } catch (e) {
-      debugPrint('Direct storage write failed: $e');
+      debugPrint('Direct storage write failed (scoped storage): $e');
       try {
         final appDir = await getApplicationDocumentsDirectory();
         final file = File('${appDir.path}/$filename');
@@ -191,19 +203,24 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
       final filename =
           'Medical_Report_${safeName}_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
-      final savedPath = await _saveFileToStorage(
-        bytes: pdfBytes,
-        filename: filename,
+      // 1. Save to temp directory for reliable cross-app sharing
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/$filename');
+      await tempFile.writeAsBytes(pdfBytes, flush: true);
+
+      // 2. Also try writing to device storage
+      await _saveFileToStorage(bytes: pdfBytes, filename: filename);
+
+      // 3. Open share sheet (WhatsApp, Drive, Save to Files, etc.)
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(tempFile.path)],
+          text: '📄 ${Ar.reportA4HeaderTitle} - ${widget.profile.name}',
+        ),
       );
 
-      await Printing.sharePdf(bytes: pdfBytes, filename: filename);
-
       if (mounted) {
-        _showToast(
-          savedPath != null
-              ? '${Ar.reportPdfSavedSuccess} (Downloads)'
-              : Ar.reportPdfSavedSuccess,
-        );
+        _showToast('✅ ${Ar.reportPdfSavedSuccess}');
       }
     } catch (e) {
       debugPrint('PDF export failed: $e');
@@ -231,18 +248,40 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
       final filename =
           'Medical_Report_${safeName}_${DateTime.now().millisecondsSinceEpoch}.png';
 
-      final savedPath = await _saveFileToStorage(
-        bytes: pngBytes,
-        filename: filename,
+      // 1. Save directly to Photo Gallery / الاستوديو
+      bool savedToGallery = false;
+      try {
+        final hasAccess = await Gal.hasAccess(toAlbum: false);
+        if (!hasAccess) {
+          await Gal.requestAccess(toAlbum: false);
+        }
+        await Gal.putImageBytes(pngBytes, name: filename);
+        savedToGallery = true;
+      } catch (galError) {
+        debugPrint('Gal save to gallery error: $galError');
+      }
+
+      // 2. Save to temp file for sharing
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/$filename');
+      await tempFile.writeAsBytes(pngBytes, flush: true);
+
+      // 3. Also try writing to storage
+      await _saveFileToStorage(bytes: pngBytes, filename: filename);
+
+      // 4. Open share sheet so user can immediately send to WhatsApp or save
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(tempFile.path)],
+          text: '🖼️ ${Ar.reportA4HeaderTitle} - ${widget.profile.name}',
+        ),
       );
 
       if (mounted) {
-        if (savedPath != null) {
-          _showToast(
-            '✅ تم حفظ صورة التقرير عالية الدقة (PNG) بنجاح في مجلد التنزيلات (Downloads):\n$filename',
-          );
+        if (savedToGallery) {
+          _showToast('✅ تم حفظ صورة التقرير في معرض الصور (Gallery) بنجاح!');
         } else {
-          _showToast(Ar.reportSaveError, isError: true);
+          _showToast('✅ تم تجهيز صورة التقرير بنجاح!');
         }
       }
     } catch (e) {

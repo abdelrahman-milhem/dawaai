@@ -311,16 +311,16 @@ class Ar {
       '🛡️ جميع الأدوية موثقة وفق المعايير الدوائية المعتمدة لحمايتك من الأخطاء.';
 
   // Step 1: Select from encyclopedia
-  static const String step1SelectDrugTitle = '1. اختيار الدواء من الموسوعة المعتمدة';
+  static const String step1SelectDrugTitle = 'الخطوة الأولى: اختيار الدواء من الموسوعة';
   static const String searchOrScanPrompt =
       'ابحث عن دوائك في الموسوعة أو امسح الباركود مباشرة:';
   static const String popularDrugsQuickSelect = 'أدوية شائعة للاختيار السريع:';
   static const String changeSelectedDrugBtn = 'تغيير الدواء';
 
   // Step 2: Locked Clinical Data
-  static const String step2LockedInfoTitle = '2. البيانات الدوائية والجرعة (مقفلة طبياً 🔒)';
+  static const String step2LockedInfoTitle = 'الخطوة الثانية: البيانات الدوائية المقفلة طبياً';
   static const String lockedAutoFilledNotice =
-      'تم تعبئة الاسم والعيار والمادة الفعالة ونوع الدواء وموعد الأكل تلقائياً من الموسوعة وهي مقفلة لضمان سلامتك.';
+      'تم تعبئة البيانات والمادة الفعالة ونوع الدواء وموعد الأكل تلقائياً لضمان سلامتك الدوائية.';
   static const String tradeNameField = 'الاسم التجاري المعتمد';
   static const String dosageStrengthField = 'العيار والجرعة المصرحة';
   static const String activeIngredientField = 'المادة الفعالة والتصنيف الطبي';
@@ -329,7 +329,7 @@ class Ar {
   static const String foodTimingLockedTitle = 'توقيت التناول بالنسبة للأكل';
 
   // Step 3: Safe Dose & Schedule
-  static const String step3SafeDoseScheduleTitle = '3. الخطة العلاجية والجرعات الآمنة';
+  static const String step3SafeDoseScheduleTitle = 'الخطوة الثالثة: الخطة العلاجية والجرعات الآمنة';
   static const String singleDoseStrictLimitTitle = 'كمية الجرعة الواحدة (مقيدة بحد أقصى آمن):';
   static const String doseStrictLimitNotice =
       '🛡️ الجرعة الواحدة مقيدة بحد أقصى آمن علمياً لمنع فرط الجرعة والتسمم الدوائي.';

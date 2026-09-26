@@ -317,20 +317,22 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
 
   /// حساب الفاصل الزمني الآمن الفعلي للدواء بالساعات
   int getSafeIntervalHours(Medicine medicine) {
-    if (medicine.minSafeIntervalHours > 0) {
-      return medicine.minSafeIntervalHours;
+    if (medicine.isTreatment) {
+      if (medicine.intervalHours > 0) return medicine.intervalHours;
+      if (medicine.scheduledTimes.isNotEmpty) {
+        final n = medicine.scheduledTimes.length;
+        if (n == 1) return 24;
+        if (n == 2) return 12;
+        if (n == 3) return 8;
+        if (n == 4) return 6;
+        return (24 ~/ n).clamp(4, 24);
+      }
+      return 8;
+    } else {
+      if (medicine.minSafeIntervalHours > 0) return medicine.minSafeIntervalHours;
+      if (medicine.intervalHours > 0) return medicine.intervalHours;
+      return 6;
     }
-    if (medicine.intervalHours > 0) {
-      return medicine.intervalHours;
-    }
-    if (medicine.scheduledTimes.isNotEmpty) {
-      final n = medicine.scheduledTimes.length;
-      if (n <= 1) return 20;
-      if (n == 2) return 8;
-      if (n == 3) return 6;
-      if (n >= 4) return (24 / n).floor().clamp(4, 6);
-    }
-    return medicine.isPainkiller ? 4 : 8;
   }
 
   /// فحص الأمان الطبي الدقيق لجميع الأدوية (علاج ومسكنات) لمنع التناول المبكر ومضاعفة الجرعة
@@ -353,13 +355,22 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
         .toList()
       ..sort((a, b) => b.takenAt.compareTo(a.takenAt));
 
-    final dosesToday = recentLogs
+    final lastTakenAt = recentLogs.isNotEmpty
+        ? recentLogs.first.takenAt
+        : medicine.lastTakenTime;
+
+    int dosesToday = recentLogs
         .where((l) => AppDateUtils.isSameDay(l.takenAt, now))
         .length;
+    if (dosesToday == 0 &&
+        medicine.lastTakenTime != null &&
+        AppDateUtils.isSameDay(medicine.lastTakenTime!, now)) {
+      dosesToday = 1;
+    }
 
     if (medicine.isPainkiller) {
       final limitReached = dosesToday >= medicine.maxDailyDoses;
-      if (recentLogs.isEmpty) {
+      if (lastTakenAt == null) {
         return MedicationSafetyInfo(
           isSafeNow: true,
           limitReached: false,
@@ -371,8 +382,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
         );
       }
 
-      final lastLog = recentLogs.first;
-      final timeSinceLastDose = now.difference(lastLog.takenAt);
+      final timeSinceLastDose = now.difference(lastTakenAt);
 
       if (limitReached) {
         return MedicationSafetyInfo(
@@ -382,7 +392,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
           maxDailyDoses: medicine.maxDailyDoses,
           timeSinceLastDose: timeSinceLastDose,
           safeIntervalHours: safeInterval,
-          lastTakenAt: lastLog.takenAt,
+          lastTakenAt: lastTakenAt,
           statusMessage: Ar.statusPainkillerLimitReached(
             dosesToday,
             medicine.maxDailyDoses,
@@ -401,7 +411,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
           maxDailyDoses: medicine.maxDailyDoses,
           timeSinceLastDose: timeSinceLastDose,
           safeIntervalHours: safeInterval,
-          lastTakenAt: lastLog.takenAt,
+          lastTakenAt: lastTakenAt,
           statusMessage: Ar.safePainkillerNotice,
           progress: 1.0,
         );
@@ -427,7 +437,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
           timeSinceLastDose: timeSinceLastDose,
           remainingCooldown: remaining,
           safeIntervalHours: safeInterval,
-          lastTakenAt: lastLog.takenAt,
+          lastTakenAt: lastTakenAt,
           statusMessage: Ar.statusPainkillerWait(timeStr),
           warningTitle: Ar.earlyIntakeWarningTitle,
           warningDetails: Ar.cooldownWarning(remaining.inMinutes),
@@ -437,7 +447,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
       }
     } else {
       // Regular Treatment (علاج يومي منتظم)
-      if (recentLogs.isEmpty) {
+      if (lastTakenAt == null) {
         return MedicationSafetyInfo(
           isSafeNow: true,
           limitReached: false,
@@ -451,8 +461,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
         );
       }
 
-      final lastLog = recentLogs.first;
-      final timeSinceLastDose = now.difference(lastLog.takenAt);
+      final timeSinceLastDose = now.difference(lastTakenAt);
 
       if (timeSinceLastDose < cooldownDuration) {
         final remaining = cooldownDuration - timeSinceLastDose;
@@ -481,7 +490,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
           timeSinceLastDose: timeSinceLastDose,
           remainingCooldown: remaining,
           safeIntervalHours: safeInterval,
-          lastTakenAt: lastLog.takenAt,
+          lastTakenAt: lastTakenAt,
           statusMessage: 'تناول مبكر! متبقي $remText لاكتمال الفاصل الآمن ($safeInterval ساعات)',
           warningTitle: Ar.earlyIntakeWarningTitle,
           warningDetails:
@@ -500,7 +509,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
             : 4,
         timeSinceLastDose: timeSinceLastDose,
         safeIntervalHours: safeInterval,
-        lastTakenAt: lastLog.takenAt,
+        lastTakenAt: lastTakenAt,
         statusMessage: 'الموعد آمن طبياً',
         progress: 1.0,
       );
@@ -817,161 +826,156 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
     final now = _now;
     final safeInterval = getSafeIntervalHours(medicine);
 
-    // تفقد آخر جرعة تم تناولها
+    // تفقد آخر جرعة تم تناولها (من السجل أو آخر جرعة مسجلة)
     final recentLogs = logs
         .where((l) => l.medicineId == medicine.id)
         .toList()
       ..sort((a, b) => b.takenAt.compareTo(a.takenAt));
     final lastLog = recentLogs.isNotEmpty ? recentLogs.first : null;
-    final earliestSafeTime =
-        lastLog?.takenAt.add(Duration(hours: safeInterval));
+    final lastTakenTime = lastLog?.takenAt ?? medicine.lastTakenTime;
+    final earliestSafeTime = lastTakenTime?.add(Duration(hours: safeInterval));
 
-    // 1. إذا كان هناك موعد مؤجل ديناميكياً مسجل للدواء (Dynamic Reschedule) ولم يُؤخذ بعد
-    if (medicine.dynamicNextDoseTime != null) {
-      final dynTime = medicine.dynamicNextDoseTime!;
-      final alreadyTaken = logs.any(
-        (l) =>
-            l.medicineId == medicine.id &&
-            l.takenAt.isAfter(dynTime.subtract(const Duration(minutes: 30))),
-      );
+    final todayLogs = logs
+        .where(
+          (l) =>
+              l.medicineId == medicine.id &&
+              AppDateUtils.isSameDay(l.takenAt, now),
+        )
+        .toList();
 
-      if (!alreadyTaken && dynTime.isAfter(now.subtract(const Duration(hours: 4)))) {
-        final timeOfDay = TimeOfDay(hour: dynTime.hour, minute: dynTime.minute);
-        final isToday = AppDateUtils.isSameDay(dynTime, now);
-        final isTomorrow = AppDateUtils.isTomorrow(dynTime, now);
-        final diffMinutes = dynTime.difference(now).inMinutes;
-
-        return _buildNextDoseInfo(
-          medicine: medicine,
-          targetTime: dynTime,
-          tod: timeOfDay,
-          isToday: isToday,
-          isTomorrow: isTomorrow,
-          isAllTodayCompleted: !isToday,
-          diffMinutes: diffMinutes,
-          isDynamicallyRescheduled: true,
-          rescheduleNotice: medicine.dynamicRescheduleNote ?? Ar.safeIntervalEnforcedBadge,
-          safeIntervalHours: safeInterval,
-        );
-      }
+    int dosesTakenCount = todayLogs.length;
+    if (dosesTakenCount == 0 &&
+        medicine.lastTakenTime != null &&
+        AppDateUtils.isSameDay(medicine.lastTakenTime!, now)) {
+      dosesTakenCount = 1;
     }
 
-    // 2. المواعيد اليومية المجدولة
+    final totalDosesCount = medicine.scheduledTimes.isNotEmpty
+        ? medicine.scheduledTimes.length
+        : (medicine.intervalHours > 0
+            ? (24 ~/ medicine.intervalHours).clamp(1, 6)
+            : (24 ~/ safeInterval).clamp(1, 6));
+
+    DateTime targetDateTime;
+    TimeOfDay targetTod;
+    bool isToday;
+    bool isTomorrow;
+    bool isAllTodayCompleted;
+    int doseNum;
+    bool isRescheduled = false;
+    String? reschedNotice;
+
+    // 1. المواعيد اليومية المجدولة
     if (medicine.scheduledTimes.isNotEmpty) {
-      final sortedTimes = List<TimeOfDay>.from(medicine.scheduledTimes)
-        ..sort(
-          (a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute),
-        );
+      final times = List<TimeOfDay>.from(medicine.scheduledTimes);
 
-      final todayLogs = logs
-          .where(
-            (l) =>
-                l.medicineId == medicine.id &&
-                AppDateUtils.isSameDay(l.takenAt, now),
-          )
-          .toList();
-
-      final dosesTakenCount = todayLogs.length;
-
-      DateTime targetDateTime;
-      TimeOfDay targetTod;
-      bool isToday;
-      bool isTomorrow;
-      bool isAllTodayCompleted;
-      int doseNum;
-      bool isRescheduled = false;
-      String? reschedNotice;
-
-      if (dosesTakenCount < sortedTimes.length) {
-        final nextTime = sortedTimes[dosesTakenCount];
-        targetDateTime = DateTime(
+      if (dosesTakenCount < times.length) {
+        final candidateTime = times[dosesTakenCount];
+        final candidate = DateTime(
           now.year,
           now.month,
           now.day,
-          nextTime.hour,
-          nextTime.minute,
+          candidateTime.hour,
+          candidateTime.minute,
         );
-        targetTod = nextTime;
-        isToday = true;
-        isTomorrow = false;
+
+        if (earliestSafeTime != null && candidate.isBefore(earliestSafeTime)) {
+          targetDateTime = earliestSafeTime;
+          targetTod = TimeOfDay(
+            hour: targetDateTime.hour,
+            minute: targetDateTime.minute,
+          );
+          isRescheduled = true;
+          final formattedT = AppDateUtils.formatTime(targetDateTime);
+          reschedNotice = Ar.delayedRescheduledSafeNotice(
+            formattedT,
+            safeInterval,
+          );
+        } else {
+          targetDateTime = candidate;
+          targetTod = candidateTime;
+        }
+
+        isToday = AppDateUtils.isSameDay(targetDateTime, now);
+        isTomorrow = AppDateUtils.isTomorrow(targetDateTime, now);
         isAllTodayCompleted = false;
-        doseNum = dosesTakenCount + 1;
+        doseNum = (dosesTakenCount + 1).clamp(1, totalDosesCount);
       } else {
-        final firstTomorrow = sortedTimes.first;
+        // جميع جرعات اليوم اكتملت -> أول جرعة غداً
+        final firstTomorrow = times.first;
         final tomorrow = now.add(const Duration(days: 1));
-        targetDateTime = DateTime(
+        final candidate = DateTime(
           tomorrow.year,
           tomorrow.month,
           tomorrow.day,
           firstTomorrow.hour,
           firstTomorrow.minute,
         );
-        targetTod = firstTomorrow;
-        isToday = false;
-        isTomorrow = true;
-        isAllTodayCompleted = true;
-        doseNum = 1;
-      }
 
-      // الفحص الطبي الجوهري:
-      // إذا كان الموعد القادم المجدول ينتهك الفاصل الزمني الآمن من آخر جرعة فعلية:
-      if (earliestSafeTime != null &&
-          targetDateTime.isBefore(earliestSafeTime) &&
-          lastLog!.takenAt.isBefore(now)) {
-        targetDateTime = earliestSafeTime;
-        targetTod = TimeOfDay(
-          hour: targetDateTime.hour,
-          minute: targetDateTime.minute,
-        );
+        if (earliestSafeTime != null && candidate.isBefore(earliestSafeTime)) {
+          targetDateTime = earliestSafeTime;
+          targetTod = TimeOfDay(
+            hour: targetDateTime.hour,
+            minute: targetDateTime.minute,
+          );
+          isRescheduled = true;
+          final formattedT = AppDateUtils.formatTime(targetDateTime);
+          reschedNotice = Ar.delayedRescheduledSafeNotice(
+            formattedT,
+            safeInterval,
+          );
+        } else {
+          targetDateTime = candidate;
+          targetTod = firstTomorrow;
+        }
+
         isToday = AppDateUtils.isSameDay(targetDateTime, now);
         isTomorrow = AppDateUtils.isTomorrow(targetDateTime, now);
-        isRescheduled = true;
-        final formattedT = AppDateUtils.formatTime(targetDateTime);
-        reschedNotice = Ar.delayedRescheduledSafeNotice(formattedT, safeInterval);
+        isAllTodayCompleted = !isToday;
+        doseNum = totalDosesCount;
+      }
+    } else {
+      // 2. أدوية الفترات الزمنية أو المسكنات بدون جدول ثابت
+      if (earliestSafeTime != null) {
+        targetDateTime = earliestSafeTime;
+        if (medicine.isTreatment && lastTakenTime != null) {
+          isRescheduled = true;
+          final formattedT = AppDateUtils.formatTime(targetDateTime);
+          reschedNotice = Ar.delayedRescheduledSafeNotice(
+            formattedT,
+            safeInterval,
+          );
+        }
+      } else if (medicine.dynamicNextDoseTime != null) {
+        targetDateTime = medicine.dynamicNextDoseTime!;
+      } else {
+        targetDateTime = now;
       }
 
-      final diffMinutes = targetDateTime.difference(now).inMinutes;
-
-      return _buildNextDoseInfo(
-        medicine: medicine,
-        targetTime: targetDateTime,
-        tod: targetTod,
-        isToday: isToday,
-        isTomorrow: isTomorrow,
-        isAllTodayCompleted: isAllTodayCompleted,
-        diffMinutes: diffMinutes,
-        doseNumberToday: doseNum,
-        totalDosesToday: sortedTimes.length,
-        isDynamicallyRescheduled: isRescheduled,
-        rescheduleNotice: reschedNotice,
-        safeIntervalHours: safeInterval,
+      targetTod = TimeOfDay(
+        hour: targetDateTime.hour,
+        minute: targetDateTime.minute,
       );
+      isToday = AppDateUtils.isSameDay(targetDateTime, now);
+      isTomorrow = AppDateUtils.isTomorrow(targetDateTime, now);
+      isAllTodayCompleted = dosesTakenCount >= totalDosesCount;
+      doseNum = (dosesTakenCount + 1).clamp(1, totalDosesCount);
     }
 
-    // 3. أدوية الفترات الزمنية
-    DateTime targetTime;
-    if (earliestSafeTime != null) {
-      targetTime = earliestSafeTime;
-    } else {
-      targetTime = now;
-    }
-
-    final timeOfDay = TimeOfDay(
-      hour: targetTime.hour,
-      minute: targetTime.minute,
-    );
-    final isToday = AppDateUtils.isSameDay(targetTime, now);
-    final isTomorrow = AppDateUtils.isTomorrow(targetTime, now);
-    final diffMinutes = targetTime.difference(now).inMinutes;
+    final diffMinutes = targetDateTime.difference(now).inMinutes;
 
     return _buildNextDoseInfo(
       medicine: medicine,
-      targetTime: targetTime,
-      tod: timeOfDay,
+      targetTime: targetDateTime,
+      tod: targetTod,
       isToday: isToday,
       isTomorrow: isTomorrow,
-      isAllTodayCompleted: false,
+      isAllTodayCompleted: isAllTodayCompleted,
       diffMinutes: diffMinutes,
+      doseNumberToday: doseNum,
+      totalDosesToday: totalDosesCount,
+      isDynamicallyRescheduled: isRescheduled,
+      rescheduleNotice: reschedNotice,
       safeIntervalHours: safeInterval,
     );
   }
@@ -1135,6 +1139,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
     int? pillsTaken,
     int? painLevel,
     String? notes,
+    DateTime? customTime,
   }) async {
     final count = pillsTaken ?? medicine.pillsPerDose;
     await recordDoseIntake(
@@ -1142,6 +1147,7 @@ class ReminderService extends ChangeNotifier with WidgetsBindingObserver {
       pillsTaken: count,
       painLevel: painLevel,
       notes: notes,
+      customTime: customTime,
     );
 
     // Refresh updated medicine and return the new next dose info

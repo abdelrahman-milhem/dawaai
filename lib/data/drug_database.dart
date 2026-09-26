@@ -531,6 +531,133 @@ class DrugDatabase {
       ],
     ),
     DrugInfo(
+      id: 'panamox',
+      tradeName: 'بناموكس (Panamox / Penamox)',
+      genericName: 'أموكسيسيلين (Amoxicillin)',
+      company: 'دار الدواء (Dar Al Dawa - DAD Jordan)',
+      category: 'مضادات حيوية واسعة المجال',
+      type: MedicineType.treatment,
+      defaultForm: MedicineForm.capsule,
+      uses: 'علاج التهابات الجهاز التنفسي العلوي، اللوزتين، الجيوب الأنفية، الأذن الوسطى، خراج الأسنان، والتهابات القصبات الهوائية.',
+      instructions: 'كبسولة واحدة كل 8 ساعات بانتظام بعد الأكل مع كوب ماء وفير لإكمال الكورس العلاجي وتجنب مقاومة البكتيريا.',
+      precautions: 'يمنع تماماً للمرضى الذين يعانون من حساسية مفرطة تجاه البنسلين أو مشتقات البيتا-لاكتام.',
+      sideEffects: 'اضطراب معوي خفيف، طفح جلدي في حال وجود حساسية.',
+      defaultIntervalHours: 8,
+      barcodes: [
+        '6251012005016',
+        '6251012005023',
+        '6251012005030',
+        '6251012005047',
+      ],
+      availableDosages: [
+        '500 ملغ كبسولات',
+        '250 ملغ كبسولات',
+        'شراب أطفال 125 ملغ/5مل',
+        'شراب أطفال 250 ملغ/5مل',
+      ],
+    ),
+    DrugInfo(
+      id: 'united_amox',
+      tradeName: 'يونايتد (United / Amoxicillin)',
+      genericName: 'أموكسيسيلين (Amoxicillin)',
+      company: 'المتحدة لصناعة الأدوية (United Pharmaceuticals - Jordan)',
+      category: 'مضادات حيوية واسعة المجال',
+      type: MedicineType.treatment,
+      defaultForm: MedicineForm.capsule,
+      uses: 'علاج الالتهابات البكتيرية الحادة في الجهاز التنفسي والجيوب والأذن والمسالك البولية وخراج الأسنان.',
+      instructions: 'كبسولة واحدة كل 8 ساعات بانتظام بعد الأكل مع كوب ماء كبير.',
+      precautions: 'يمنع لمرضى حساسية البنسلين. يجب الالتزام بإكمال المدة الموصوفة بالكامل.',
+      sideEffects: 'غثيان عابر، إسهال خفيف.',
+      defaultIntervalHours: 8,
+      barcodes: [
+        '6251052001018',
+        '6251052001025',
+        '6251052001032',
+      ],
+      availableDosages: [
+        '500 ملغ كبسولات',
+        '250 ملغ كبسولات',
+        'شراب معلق 125 ملغ/5مل',
+        'شراب معلق 250 ملغ/5مل',
+      ],
+    ),
+    DrugInfo(
+      id: 'amoxydar',
+      tradeName: 'أموكسيدار (Amoxydar)',
+      genericName: 'أموكسيسيلين (Amoxicillin)',
+      company: 'دار الدواء (Dar Al Dawa - DAD Jordan)',
+      category: 'مضادات حيوية واسعة المجال',
+      type: MedicineType.treatment,
+      defaultForm: MedicineForm.capsule,
+      uses: 'علاج الالتهابات البكتيرية العامة، التهاب الحلق، اللوزتين، الجيوب الأنفية والمسالك البولية.',
+      instructions: 'كبسولة واحدة كل 8 ساعات بعد الأكل.',
+      precautions: 'يمنع لمرضى حساسية البنسلين.',
+      sideEffects: 'اضطراب هضمي خفيف.',
+      defaultIntervalHours: 8,
+      barcodes: [
+        '6251012006013',
+        '6251012006020',
+      ],
+      availableDosages: [
+        '500 ملغ كبسولات',
+        '250 ملغ كبسولات',
+        'شراب أطفال 125 ملغ/5مل',
+        'شراب أطفال 250 ملغ/5مل',
+      ],
+    ),
+    DrugInfo(
+      id: 'augmentin',
+      tradeName: 'أوجمنتين (Augmentin)',
+      genericName: 'أموكسيسيلين + كلافولانات (Amoxicillin + Clavulanic Acid)',
+      company: 'جلاكسو سميث كلاين (GSK - GlaxoSmithKline)',
+      category: 'مضادات حيوية واسعة المجال',
+      type: MedicineType.treatment,
+      defaultForm: MedicineForm.pill,
+      uses: 'علاج الالتهابات البكتيرية المعقدة في الصدر، الجيوب، الأذن الوسطى، والمسالك البولية والجلد والأسنان.',
+      instructions: 'قرص واحد كل 12 ساعة مع وجبة طعام كاملة لتجنب اضطراب المعدة.',
+      precautions: 'يمنع لمرضى حساسية البنسلين ومن عانوا سابقاً من يرقان أو خلل كبدي بسبب الدواء.',
+      sideEffects: 'إسهال، غثيان خفيف.',
+      defaultIntervalHours: 12,
+      barcodes: [
+        '5000158068940',
+        '5000158068957',
+        '5000158068964',
+      ],
+      availableDosages: [
+        '625 ملغ أقراص',
+        '1 غرام (1000 ملغ) أقراص',
+        '375 ملغ أقراص',
+        'شراب أطفال 228 ملغ/5مل',
+        'شراب أطفال 457 ملغ/5مل',
+        'شراب أطفال 312 ملغ/5مل',
+        'شراب أطفال 156 ملغ/5مل',
+        'أوجمنتين ES 600 ملغ/5مل',
+      ],
+    ),
+    DrugInfo(
+      id: 'curam',
+      tradeName: 'كيورام (Curam)',
+      genericName: 'أموكسيسيلين + حمض الكلافولانيك (Amoxicillin + Clavulanic Acid)',
+      company: 'ساندوز / نوفارتس (Sandoz - Novartis)',
+      category: 'مضادات حيوية واسعة المجال',
+      type: MedicineType.treatment,
+      defaultForm: MedicineForm.pill,
+      uses: 'علاج الالتهابات البكتيرية في الجهاز التنفسي والجيوب والأسنان.',
+      instructions: 'قرص كل 12 ساعة مع الوجبات.',
+      precautions: 'يمنع لمرضى حساسية البنسلين.',
+      sideEffects: 'اضطراب معوي، غثيان.',
+      defaultIntervalHours: 12,
+      barcodes: [
+        '9005637012345',
+      ],
+      availableDosages: [
+        '625 ملغ أقراص',
+        '1 غرام (1000 ملغ) أقراص',
+        'شراب أطفال 228.5 ملغ/5مل',
+        'شراب أطفال 457 ملغ/5مل',
+      ],
+    ),
+    DrugInfo(
       id: 'clavodar',
       tradeName: 'كلافودار (Clavodar)',
       genericName: 'أموكسيسيلين + كلافولانات (Amoxicillin + Clavulanic Acid)',
@@ -848,8 +975,8 @@ class DrugDatabase {
     ),
     DrugInfo(
       id: 'biodal',
-      tradeName: 'بيودال (Biodal 50,000 IU)',
-      genericName: 'فيتامين د3 - كوليكالسيفيرول (Vitamin D3 - Cholecalciferol)',
+      tradeName: 'بيودال (Biodal)',
+      genericName: 'فيتامين د3 (كوليكالسيفيرول - Vitamin D3)',
       company: 'شركة الحياة للصناعات الدوائية (Hayat Pharma - Jordan)',
       category: 'فيتامينات ومكملات صحة العظام والمناعة',
       type: MedicineType.treatment,
@@ -864,14 +991,14 @@ class DrugDatabase {
         '6251025001029',
       ],
       availableDosages: [
-        '50,000 وحدة دولية (Biodal 50,000 IU - أسبوعي)',
-        '5,000 وحدة دولية (Biodal 5,000 IU)',
-        '1,000 وحدة دولية (Biodal 1,000 IU - يومي)',
+        '50,000 وحدة دولية (أسبوعي)',
+        '5,000 وحدة دولية (يومي)',
+        '1,000 وحدة دولية (يومي)',
       ],
     ),
     DrugInfo(
       id: 'd_well',
-      tradeName: 'دي-ويل (D-Well 50,000 IU)',
+      tradeName: 'دي-ويل (D-Well)',
       genericName: 'فيتامين د3 (Vitamin D3)',
       company: 'الحكمة للصناعات الدوائية (Hikma Pharmaceuticals)',
       category: 'فيتامينات ومكملات صحة العظام',
@@ -886,8 +1013,9 @@ class DrugDatabase {
         '6251005004018',
       ],
       availableDosages: [
-        '50,000 وحدة دولية كبسولات رخوة أسبوعية',
-        '10,000 وحدة دولية كبسولات',
+        '50,000 وحدة دولية (أسبوعي)',
+        '5,000 وحدة دولية (يومي)',
+        '1,000 وحدة دولية (يومي)',
       ],
     ),
     DrugInfo(
@@ -1019,6 +1147,53 @@ class DrugDatabase {
         '250 ملغ كبسولات',
         '500 ملغ كبسولات',
         'شراب أطفال 125ملغ/5مل',
+        'شراب أطفال 250ملغ/5مل',
+      ],
+    ),
+    DrugInfo(
+      id: 'penamox',
+      tradeName: 'بناموكس (Penamox / Panamox)',
+      genericName: 'أموكسيسيلين (Amoxicillin)',
+      company: 'دار الدواء (Dar Al Dawa - DAD Jordan)',
+      category: 'مضادات حيوية واسعة المجال',
+      type: MedicineType.treatment,
+      defaultForm: MedicineForm.capsule,
+      uses: 'علاج التهابات الجهاز التنفسي، الأذن الوسطى، اللوزتين، الجيوب الأنفية والتهاب الأسنان.',
+      instructions: 'كبسولة واحدة كل 8 ساعات بعد الأكل بانتظام. يجب إكمال الكورس العلاجي كاملاً.',
+      precautions: 'يمنع لمرضى حساسية البنسلين. الحذر لمرضى القصور الكلوي.',
+      sideEffects: 'اضطراب هضمي خفيف، إسهال عابر.',
+      defaultIntervalHours: 8,
+      barcodes: [
+        '6251012002015',
+        '6251012002022',
+      ],
+      availableDosages: [
+        '500 ملغ كبسولات',
+        '250 ملغ كبسولات',
+        'شراب أطفال 125ملغ/5مل',
+        'شراب أطفال 250ملغ/5مل',
+      ],
+    ),
+    DrugInfo(
+      id: 'united_amox',
+      tradeName: 'يونايتد (United / Amoxicillin)',
+      genericName: 'أموكسيسيلين (Amoxicillin)',
+      company: 'الشركة الأردنية المتحدة للأدوية (United Pharmaceuticals)',
+      category: 'مضادات حيوية واسعة المجال',
+      type: MedicineType.treatment,
+      defaultForm: MedicineForm.capsule,
+      uses: 'علاج العدوى البكتيرية الحادة في الجهاز التنفسي والمسالك البولية وخراج الأسنان.',
+      instructions: 'كبسولة واحدة كل 8 ساعات بعد الأكل مع كوب ماء وفير.',
+      precautions: 'ممنوع لمرضى حساسية البنسلين.',
+      sideEffects: 'غثيان خفيف، طفح جلدي عند التحسس.',
+      defaultIntervalHours: 8,
+      barcodes: [
+        '6251034001010',
+        '6251034001027',
+      ],
+      availableDosages: [
+        '500 ملغ كبسولات',
+        '250 ملغ كبسولات',
         'شراب أطفال 250ملغ/5مل',
       ],
     ),
@@ -2767,8 +2942,8 @@ class DrugDatabase {
     // ==========================================
     DrugInfo(
       id: 'biodal_50k',
-      tradeName: 'بيودال 50,000 (Biodal 50,000 IU)',
-      genericName: 'كوليكالسيفيرول - فيتامين د3 (Cholecalciferol - Vitamin D3)',
+      tradeName: 'بيودال (Biodal)',
+      genericName: 'فيتامين د3 (كوليكالسيفيرول - Vitamin D3)',
       company: 'الحكمة للصناعات الدوائية (Hikma Pharmaceuticals)',
       category: 'فيتامينات وعلاج نقص فيتامين د طويل الأمد',
       type: MedicineType.treatment,
@@ -2780,15 +2955,15 @@ class DrugDatabase {
       defaultIntervalHours: 168,
       barcodes: ['6251001001012', '6251001002029', '6281003001017'],
       availableDosages: [
-        '50,000 وحدة دولية أقراص أسبوعية (50,000 IU)',
-        '10,000 وحدة دولية كبسولات',
-        '5,000 وحدة دولية أقراص يومية',
-        '1,000 وحدة دولية للمداومة اليومية',
+        '50,000 وحدة دولية (أسبوعي)',
+        '10,000 وحدة دولية',
+        '5,000 وحدة دولية',
+        '1,000 وحدة دولية (يومي)',
       ],
     ),
     DrugInfo(
       id: 'dwell_50k',
-      tradeName: 'دي-ويل 50,000 (D-Well 50,000 IU)',
+      tradeName: 'دي-ويل (D-Well)',
       genericName: 'فيتامين د3 كبسولات جيلاتينية (Vitamin D3 Softgels)',
       company: 'ويل فارما (Well Pharma)',
       category: 'فيتامينات ومكملات طويلة المدى',
@@ -2801,8 +2976,8 @@ class DrugDatabase {
       defaultIntervalHours: 168,
       barcodes: ['6285001001015', '6285001002022'],
       availableDosages: [
-        'كبسولات جيلاتينية 50,000 وحدة',
-        'كبسولات جيلاتينية 10,000 وحدة',
+        '50,000 وحدة دولية (أسبوعي)',
+        '10,000 وحدة دولية',
       ],
     ),
     DrugInfo(
@@ -4125,7 +4300,14 @@ class DrugDatabase {
 
   // --- HIGH-PERFORMANCE ZERO-RESOURCE INDEXES ---
   static final Map<String, DrugInfo> _barcodeIndex = _buildBarcodeIndex();
-  static final List<String> _precomputedBlobs = _buildSearchBlobs();
+  static List<String>? _precomputedBlobsCache;
+  static List<String> get _precomputedBlobs {
+    if (_precomputedBlobsCache == null ||
+        _precomputedBlobsCache!.length != allDrugs.length) {
+      _precomputedBlobsCache = _buildSearchBlobs();
+    }
+    return _precomputedBlobsCache!;
+  }
   static final Map<String, List<DrugInfo>> _searchCache = {};
 
   static Map<String, DrugInfo> _buildBarcodeIndex() {

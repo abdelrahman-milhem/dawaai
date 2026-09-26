@@ -68,8 +68,12 @@ void main() {
     expect(initialNext.isToday, isTrue);
     expect(initialNext.isAllTodayCompleted, isFalse);
 
-    // Step 2: User taps "أخذت الجرعة" -> Immediately advances to 20:00 PM dose
-    final afterFirstDose = await reminderService.takeNextDoseNow(med);
+    final now = DateTime.now();
+    final morning8am = DateTime(now.year, now.month, now.day, 8, 0);
+    final evening8pm = DateTime(now.year, now.month, now.day, 20, 0);
+
+    // Step 2: User taps "أخذت الجرعة" for 8:00 AM -> Immediately advances to 20:00 PM dose
+    final afterFirstDose = await reminderService.takeNextDoseNow(med, customTime: morning8am);
     expect(afterFirstDose, isNotNull);
     expect(afterFirstDose!.timeOfDay.hour, equals(20));
     expect(afterFirstDose.isToday, isTrue);
@@ -80,7 +84,7 @@ void main() {
     expect(updatedMeds.firstWhere((m) => m.id == med.id).totalPills, equals(29));
 
     // Step 3: User takes the second dose (20:00 PM) -> Today's doses completed, next is tomorrow 8:00 AM!
-    final afterSecondDose = await reminderService.takeNextDoseNow(med);
+    final afterSecondDose = await reminderService.takeNextDoseNow(med, customTime: evening8pm);
     expect(afterSecondDose, isNotNull);
     expect(afterSecondDose!.isAllTodayCompleted, isTrue);
     expect(afterSecondDose.isTomorrow, isTrue);
@@ -857,6 +861,102 @@ void main() {
     expect(savedMed, isNotNull);
     expect(savedMed!.lastTakenTime, isNotNull);
     expect(AppDateUtils.isYesterday(savedMed!.lastTakenTime!), isTrue);
+  });
+
+  test('Panamox and United 8-hour schedule and NextDose calculation with first dose at 12:38', () async {
+    SharedPreferences.setMockInitialValues({});
+    final storageService = await StorageService.init();
+    final reminderService = ReminderService(storageService);
+
+    // 1. Search for Panamox in DrugDatabase
+    final panamoxHits = DrugDatabase.search('بناموكس');
+    expect(panamoxHits, isNotEmpty);
+    final panamox = panamoxHits.first;
+    expect(panamox.defaultIntervalHours, equals(8));
+
+    // 2. Add Panamox with first dose taken at 12:38 today
+    final now = DateTime.now();
+    final taken1238 = DateTime(now.year, now.month, now.day, 12, 38);
+    final scheduled = Medicine.calculateScheduledTimes(
+      firstDose: const TimeOfDay(hour: 12, minute: 38),
+      dosesPerDay: 3,
+      intervalHours: 8,
+    );
+    expect(scheduled.length, equals(3));
+    expect(scheduled[0], equals(const TimeOfDay(hour: 12, minute: 38)));
+    expect(scheduled[1], equals(const TimeOfDay(hour: 20, minute: 38)));
+    expect(scheduled[2], equals(const TimeOfDay(hour: 4, minute: 38)));
+
+    final med = Medicine(
+      id: 'panamox_test',
+      name: 'بناموكس (Panamox / Penamox) - 500 ملغ كبسولات',
+      type: MedicineType.treatment,
+      totalPills: 20,
+      pillsPerDose: 1,
+      scheduledTimes: scheduled,
+      firstDoseTime: const TimeOfDay(hour: 12, minute: 38),
+      lastTakenTime: taken1238,
+      intervalHours: 8,
+      minSafeIntervalHours: 8,
+    );
+
+    await storageService.addMedicine(med);
+
+    // Initial DoseLog is recorded
+    final initialLog = DoseLog(
+      id: 'log_panamox_1',
+      medicineId: med.id,
+      medicineName: med.name,
+      takenAt: taken1238,
+      pillsTaken: 1,
+    );
+    await storageService.addDoseLog(initialLog);
+
+    // 3. Next dose calculation
+    final nextInfo = reminderService.getNextDoseForMedicine(med);
+    expect(nextInfo, isNotNull);
+    expect(nextInfo!.timeOfDay, equals(const TimeOfDay(hour: 20, minute: 38)));
+    expect(nextInfo.doseNumberToday, equals(2));
+    expect(nextInfo.totalDosesToday, equals(3));
+    expect(nextInfo.isToday, isTrue);
+    expect(nextInfo.formattedTime.contains('8:38'), isTrue);
+  });
+
+  test('Biodal clean tradeName and availableDosages without nested brackets', () {
+    final biodalHits = DrugDatabase.search('بيودال');
+    expect(biodalHits, isNotEmpty);
+    final biodal = biodalHits.first;
+    expect(biodal.tradeName, equals('بيودال (Biodal)'));
+    expect(biodal.availableDosages.first.contains('(Biodal'), isFalse);
+  });
+
+  test('Painkiller added with first dose taken 2 hours ago strictly enforces safe cooldown', () async {
+    SharedPreferences.setMockInitialValues({});
+    final storageService = await StorageService.init();
+    final reminderService = ReminderService(storageService);
+
+    final now = DateTime.now();
+    final twoHoursAgo = now.subtract(const Duration(hours: 2));
+
+    final painkiller = Medicine(
+      id: 'panadol_test_2h',
+      name: 'بنادول 500 ملغ',
+      type: MedicineType.painkiller,
+      totalPills: 24,
+      pillsPerDose: 1,
+      lastTakenTime: twoHoursAgo,
+      minSafeIntervalHours: 6,
+      maxDailyDoses: 4,
+    );
+
+    await storageService.addMedicine(painkiller);
+
+    final safety = reminderService.getMedicationSafety(painkiller);
+    expect(safety.isSafeNow, isFalse);
+    expect(safety.isEarlyIntake, isTrue);
+    expect(safety.remainingCooldown, isNotNull);
+    // Remaining cooldown should be ~4 hours (between 3h 55m and 4h 5m)
+    expect(safety.remainingCooldown!.inMinutes >= 235 && safety.remainingCooldown!.inMinutes <= 245, isTrue);
   });
 }
 

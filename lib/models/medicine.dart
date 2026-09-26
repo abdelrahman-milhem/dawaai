@@ -274,7 +274,6 @@ class Medicine {
       final minute = totalMinutes % 60;
       result.add(TimeOfDay(hour: hour, minute: minute));
     }
-    result.sort((a, b) => (a.hour * 60 + a.minute).compareTo(b.hour * 60 + b.minute));
     return result;
   }
 }

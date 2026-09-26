@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/medicine.dart';
 import '../models/drug_info.dart';
+import '../models/dose_log.dart';
 import '../models/user_profile.dart';
+import '../utils/date_utils.dart';
 import '../services/storage_service.dart';
 import '../services/reminder_service.dart';
 import '../widgets/add_medicine_sheet.dart';
@@ -77,7 +79,24 @@ class _HomeScreenState extends State<HomeScreen> {
             await widget.storageService.updateMedicine(med);
           } else {
             await widget.storageService.addMedicine(med);
+            if (med.lastTakenTime != null) {
+              final initialLog = DoseLog(
+                id: 'log_${med.lastTakenTime!.millisecondsSinceEpoch}',
+                medicineId: med.id,
+                medicineName: med.name,
+                takenAt: med.lastTakenTime!,
+                pillsTaken: med.pillsPerDose,
+                isPainkiller: med.isPainkiller,
+                notes: 'الجرعة الأولى المسجلة عند إضافة الدواء (${AppDateUtils.formatTime(med.lastTakenTime!)})',
+              );
+              await widget.storageService.addDoseLog(
+                initialLog,
+                recalculatedNextDose: med.dynamicNextDoseTime,
+                note: med.dynamicRescheduleNote,
+              );
+            }
           }
+          await widget.reminderService.scheduleAllFutureNativeAlarms();
           setState(() {});
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(

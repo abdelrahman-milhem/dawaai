@@ -740,11 +740,12 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
 
   String _buildFullMedicineName() {
     if (_selectedDrugInfo == null) return '';
-    if (_selectedDosage.trim().isEmpty) return _selectedDrugInfo!.tradeName;
-    if (_selectedDrugInfo!.tradeName.contains(_selectedDosage)) {
-      return _selectedDrugInfo!.tradeName;
+    final trade = _selectedDrugInfo!.tradeName.trim();
+    if (_selectedDosage.trim().isEmpty) return trade;
+    if (trade.toLowerCase().contains(_selectedDosage.toLowerCase())) {
+      return trade;
     }
-    return '${_selectedDrugInfo!.tradeName} ($_selectedDosage)';
+    return '$trade - $_selectedDosage';
   }
 
   @override
@@ -1264,7 +1265,8 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                             const SizedBox(width: 6),
                             const Expanded(
                               child: Text(
-                                'اختر العيار والتركيز المتوفر لديك (معتمد من الموسوعة 🔒):',
+                                'اختر العيار والتركيز المتوفر لديك (معتمد):',
+                                textDirection: TextDirection.rtl,
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.bold,
@@ -1285,6 +1287,7 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                             return ChoiceChip(
                               label: Text(
                                 dosage,
+                                textDirection: TextDirection.rtl,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: isSel
@@ -1307,7 +1310,7 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                   const SizedBox(height: 10),
                 ],
 
-                // 3. Field: Active Ingredient & Category (Locked 🔒)
+                // 3. Field: Active Ingredient & Category (Locked)
                 _buildLockedField(
                   label: Ar.activeIngredientField,
                   value:
@@ -1317,12 +1320,12 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                 ),
                 const SizedBox(height: 10),
 
-                // 4. Field: Medicine Type (Locked 🔒)
+                // 4. Field: Medicine Type (Locked)
                 _buildLockedField(
                   label: Ar.medicineTypeLockedTitle,
                   value: _type == MedicineType.painkiller
-                      ? 'مسكن ألم وخافض حرارة (يؤخذ عند اللزوم بفاصل أمان صارم) 🔒'
-                      : 'علاج منتظم ومجدول (يؤخذ بمواعيد يومية ثابتة) 🔒',
+                      ? 'مسكن ألم وخافض حرارة (يؤخذ عند اللزوم بفاصل أمان صارم)'
+                      : 'علاج منتظم ومجدول (يؤخذ بمواعيد يومية ثابتة)',
                   icon: _type == MedicineType.painkiller
                       ? Icons.healing_rounded
                       : Icons.calendar_today_rounded,
@@ -1332,10 +1335,10 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                 ),
                 const SizedBox(height: 10),
 
-                // 5. Field: Food Relation Timing (Locked 🔒)
+                // 5. Field: Food Relation Timing (Locked)
                 _buildLockedField(
                   label: Ar.foodTimingLockedTitle,
-                  value: '$_foodRelationText (محدد تلقائياً وفق التوصيات الصيدلانية 🔒)',
+                  value: '$_foodRelationText (محدد تلقائياً وفق التوصيات الصيدلانية)',
                   icon: Icons.restaurant_rounded,
                   color: const Color(0xFF10B981),
                 ),
@@ -1820,9 +1823,9 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
       );
       if (_type == MedicineType.treatment) {
         rescheduleNote =
-            'تم تحديد جدول الجرعات بناءً على موعد أول جرعة تم أخذها (${AppDateUtils.formatTimeOfDay(TimeOfDay.fromDateTime(_firstDoseTakenDateTime))})';
+            'تم بدء العد التنازلي للجرعة التالية: موعدها الآمن ${AppDateUtils.formatTime(dynamicNext)} لمنع الجرعة الزائدة.';
       } else {
-        rescheduleNote = 'سيبدأ فاصل الأمان الدوائي من وقت أول جرعة';
+        rescheduleNote = 'سيبدأ فاصل الأمان الدوائي ($_intervalHours ساعات) من وقت أول جرعة';
       }
     } else {
       lastTaken = null;
@@ -2229,6 +2232,7 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
         Expanded(
           child: Text(
             title,
+            textDirection: TextDirection.rtl,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -2266,18 +2270,21 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
               children: [
                 Text(
                   label,
+                  textDirection: TextDirection.rtl,
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   value,
+                  textDirection: TextDirection.rtl,
                   style: const TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
+                    height: 1.35,
                   ),
                 ),
               ],

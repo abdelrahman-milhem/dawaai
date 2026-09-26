@@ -320,4 +320,60 @@ void main() {
     expect(logs.isNotEmpty, isTrue);
     expect(logs.first.pillsTaken, equals(2));
   });
+
+  test('Medical Safety Engine: Early intake warning & Delayed dose dynamic rescheduling', () async {
+    SharedPreferences.setMockInitialValues({});
+    final storage = await StorageService.init();
+    final reminder = ReminderService(storage);
+
+    // Scenario: Medicine taken 3 times a day (8-hour interval: 08:00, 16:00, 24:00)
+    final med = Medicine(
+      id: 'med_safety_test',
+      name: 'مضاد حيوي أوجمنتين',
+      type: MedicineType.treatment,
+      totalPills: 30,
+      pillsPerDose: 1,
+      minSafeIntervalHours: 8,
+      scheduledTimes: const [
+        TimeOfDay(hour: 8, minute: 0),
+        TimeOfDay(hour: 16, minute: 0),
+        TimeOfDay(hour: 23, minute: 59),
+      ],
+    );
+    await storage.addMedicine(med);
+
+    // 1. Check Safe interval hours calculation
+    final interval = reminder.getSafeIntervalHours(med);
+    expect(interval, equals(8)); // 24 / 3 = 8 hours
+
+    // 2. User took dose at 10:00 AM (2 hours late from 08:00 AM scheduled dose)
+    final takenAt = DateTime(2026, 9, 26, 10, 0);
+
+    // Log dose at 10:00 AM
+    await reminder.recordDoseIntake(
+      medicine: med,
+      pillsTaken: 1,
+      customTime: takenAt,
+    );
+
+    // The next scheduled time was supposed to be 16:00 (which is only 6h from 10:00).
+    // The safety engine MUST dynamically reschedule next dose to 10:00 + 8h = 18:00 PM!
+    final updatedMed = storage.getMedicines().firstWhere((m) => m.id == med.id);
+    expect(updatedMed.dynamicNextDoseTime, isNotNull);
+    expect(updatedMed.dynamicNextDoseTime!.hour, equals(18));
+    expect(updatedMed.dynamicNextDoseTime!.minute, equals(0));
+
+    // 3. Early Intake Safety check: If user tries to take another dose at 12:00 PM (only 2h later)
+    final earlyAttemptTime = DateTime(2026, 9, 26, 12, 0);
+    final safetyCheck = reminder.getMedicationSafety(
+      updatedMed,
+      null,
+      earlyAttemptTime,
+    );
+    expect(safetyCheck.isSafeNow, isFalse);
+    expect(safetyCheck.remainingCooldown?.inMinutes, equals(360)); // 6 hours remaining (360 mins)
+    expect(safetyCheck.safeIntervalHours, equals(8));
+
+    reminder.dispose();
+  });
 }

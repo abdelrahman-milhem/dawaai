@@ -7,7 +7,7 @@ import '../services/reminder_service.dart';
 
 class DoseLogSheet extends StatefulWidget {
   final Medicine medicine;
-  final PainkillerSafetyInfo? safetyInfo;
+  final MedicationSafetyInfo? safetyInfo;
   final Function(DoseLog log) onConfirmed;
 
   const DoseLogSheet({
@@ -37,6 +37,98 @@ class _DoseLogSheetState extends State<DoseLogSheet> {
     if (_painLevel <= 3) return Colors.green;
     if (_painLevel <= 6) return Colors.orange;
     return Colors.red;
+  }
+
+  Future<void> _handleConfirmDose() async {
+    final safety = widget.safetyInfo;
+    if (safety != null && !safety.isSafeNow) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  safety.warningTitle.isNotEmpty ? safety.warningTitle : Ar.earlyIntakeWarningTitle,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                safety.warningDetails.isNotEmpty ? safety.warningDetails : safety.statusMessage,
+                style: const TextStyle(fontSize: 13.5, height: 1.5),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Colors.red, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'الحد الأدنى للفاصل الآمن: ${safety.safeIntervalHours} ساعات',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF0D9488),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+              child: const Text(
+                Ar.earlyIntakeWaitRecommendation,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[700],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text(Ar.earlyIntakeConfirmOverride),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+    }
+
+    final log = DoseLog(
+      id: 'log_${DateTime.now().millisecondsSinceEpoch}',
+      medicineId: widget.medicine.id,
+      medicineName: widget.medicine.name,
+      takenAt: DateTime.now(),
+      pillsTaken: _pillsTaken,
+      isPainkiller: widget.medicine.isPainkiller,
+      painLevel: widget.medicine.isPainkiller ? _painLevel.toInt() : null,
+      notes: _notes.isNotEmpty ? _notes : null,
+    );
+    widget.onConfirmed(log);
+    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -117,35 +209,50 @@ class _DoseLogSheetState extends State<DoseLogSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Safety Warning if painkiller and NOT safe
-            if (isPainkiller && safety != null && !safety.isSafeNow) ...[
+            // Safety Warning if NOT safe (لجميع الأدوية: مسكنات وعلاجات يومية)
+            if (safety != null && !safety.isSafeNow) ...[
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.5), width: 1.5),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.warning_amber_rounded,
-                      color: Colors.red,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        safety.limitReached
-                            ? Ar.limitReachedWarning(safety.maxDailyDoses)
-                            : Ar.cooldownWarning(
-                                safety.remainingCooldown?.inMinutes ?? 0,
-                              ),
-                        style: const TextStyle(
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.warning_amber_rounded,
                           color: Colors.red,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
+                          size: 28,
                         ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            safety.warningTitle.isNotEmpty
+                                ? safety.warningTitle
+                                : Ar.earlyIntakeWarningTitle,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      safety.warningDetails.isNotEmpty
+                          ? safety.warningDetails
+                          : safety.statusMessage,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
                       ),
                     ),
                   ],
@@ -154,8 +261,8 @@ class _DoseLogSheetState extends State<DoseLogSheet> {
               const SizedBox(height: 16),
             ],
 
-            // Safe message if painkiller and SAFE
-            if (isPainkiller && (safety == null || safety.isSafeNow)) ...[
+            // Safe message if SAFE
+            if (safety == null || safety.isSafeNow) ...[
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -165,18 +272,18 @@ class _DoseLogSheetState extends State<DoseLogSheet> {
                     color: Colors.green.withValues(alpha: 0.4),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.check_circle_outline,
                       color: Colors.green,
                       size: 24,
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        Ar.safePainkillerNotice,
-                        style: TextStyle(
+                        isPainkiller ? Ar.safePainkillerNotice : 'الموعد آمن طبياً وجاهز للتناول',
+                        style: const TextStyle(
                           color: Color(0xFF047857),
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -399,20 +506,7 @@ class _DoseLogSheetState extends State<DoseLogSheet> {
 
             // Action Button
             ElevatedButton.icon(
-              onPressed: () {
-                final log = DoseLog(
-                  id: 'log_${DateTime.now().millisecondsSinceEpoch}',
-                  medicineId: med.id,
-                  medicineName: med.name,
-                  takenAt: DateTime.now(),
-                  pillsTaken: _pillsTaken,
-                  isPainkiller: isPainkiller,
-                  painLevel: isPainkiller ? _painLevel.toInt() : null,
-                  notes: _notes.isNotEmpty ? _notes : null,
-                );
-                widget.onConfirmed(log);
-                Navigator.pop(context);
-              },
+              onPressed: _handleConfirmDose,
               icon: const Icon(Icons.check),
               label: Text(
                 isPainkiller

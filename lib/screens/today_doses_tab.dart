@@ -747,6 +747,36 @@ class TodayDosesTab extends StatelessWidget {
                       ),
                     ],
                   ),
+
+                  if (nextInfo.isDynamicallyRescheduled && nextInfo.rescheduleNotice != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D9488).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF0D9488).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.shield_outlined, color: Color(0xFF0D9488), size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              nextInfo.rescheduleNotice!,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F766E),
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -755,10 +785,10 @@ class TodayDosesTab extends StatelessWidget {
             const Divider(height: 1),
             const SizedBox(height: 10),
 
-            // Action row: One-Tap "أخذت الجرعة" which instantly advances to next dose!
+            // Action row: One-Tap "أخذت الجرعة" with Early-Intake Safety Protection
             Row(
               children: [
-                // Dose progress badge (Flexible to fit any screen size)
+                // Dose progress badge
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -793,16 +823,92 @@ class TodayDosesTab extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
 
-                // CORE USER REQUIREMENT BUTTON:
-                // "بمجرد انه اكبس انه اخذته على طول يظهر موعدها التالي ويروح القديم"
+                // CORE USER REQUIREMENT BUTTON with Safety Early-Intake Check
                 ElevatedButton.icon(
                   onPressed: med.isOutOfStock
                       ? () => onRefill(med)
                       : () async {
-                          // 1. Immediately advance to next dose!
+                          final safety = reminderService.getMedicationSafety(med);
+                          if (!safety.isSafeNow) {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                title: Row(
+                                  children: [
+                                    const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        safety.warningTitle.isNotEmpty ? safety.warningTitle : Ar.earlyIntakeWarningTitle,
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      safety.warningDetails.isNotEmpty ? safety.warningDetails : safety.statusMessage,
+                                      style: const TextStyle(fontSize: 13.5, height: 1.5),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.info_outline_rounded, color: Colors.red, size: 20),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'الحد الأدنى للفاصل الآمن: ${safety.safeIntervalHours} ساعات',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.red),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFF0D9488),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                    ),
+                                    child: const Text(
+                                      Ar.earlyIntakeWaitRecommendation,
+                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red[700],
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    child: const Text(Ar.earlyIntakeConfirmOverride),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirmed != true) return;
+                          }
+
+                          // Immediately advance to next dose with safe interval!
                           final newNext = await reminderService.takeNextDoseNow(med);
 
-                          // 2. Instant feedback showing the new next appointment
+                          // Instant feedback showing the new next appointment
                           if (context.mounted && newNext != null) {
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             ScaffoldMessenger.of(context).showSnackBar(

@@ -245,6 +245,21 @@ class Ar {
       'تحذير: تجاوزت الحد الأقصى اليومي ($maxDailyDoses جرعات). لا ينصح بتناول جرعة إضافية.';
   static String cooldownWarning(int mins) =>
       'تحذير طبي: لم ينتهِ الفاصل الآمن بعد ($mins دقيقة متبقية).';
+  static const String earlyIntakeWarningTitle = '⚠️ تحذير طبي: تناول الدواء قبل موعده الآمن';
+  static const String earlyIntakeWarningDesc =
+      'تناول الجرعة قبل اكتمال الفاصل الزمني الآمن قد يسبب تراكم المادة الفعالة في الدم وخطر التسمم الدوائي أو المضاعفات الخطيرة.';
+  static String earlyIntakeLastDoseInfo(String timeAgoStr, int safeHours) =>
+      'آخر جرعة تم تناولها كانت قبل $timeAgoStr. الحد الأدنى للفاصل الآمن هو $safeHours ساعات.';
+  static String earlyIntakeCooldownRemaining(int hours, int mins) {
+    if (hours > 0 && mins > 0) return '$hours ساعة و $mins دقيقة';
+    if (hours > 0) return '$hours ساعة';
+    return '$mins دقيقة';
+  }
+  static const String earlyIntakeWaitRecommendation = 'الانتظار حتى الموعد الآمن (موصى به طبياً)';
+  static const String earlyIntakeConfirmOverride = 'أنا على دراية بالخطر، تأكيد التناول الآن';
+  static String delayedRescheduledSafeNotice(String newTime, int safeHours) =>
+      'تم تأجيل موعد الجرعة التالية تلقائياً إلى $newTime للحفاظ على الفاصل الزمني الآمن ($safeHours ساعات) بعد تأخر الجرعة.';
+  static const String safeIntervalEnforcedBadge = 'موعد مصحح للأمان الطبي';
   static String stockRemainingFormatted(
     int remaining,
     int total,

@@ -146,9 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openTakeDoseSheet(Medicine medicine) {
-    final safety = medicine.isPainkiller
-        ? widget.reminderService.getPainkillerSafety(medicine)
-        : null;
+    final safety = widget.reminderService.getMedicationSafety(medicine);
 
     showModalBottomSheet(
       context: context,

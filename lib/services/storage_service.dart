@@ -1036,6 +1036,48 @@ class StorageService extends ChangeNotifier {
     });
   }
 
+  // --- OFFICIAL DOCTOR REPORT STAMP PREFERENCES ---
+  static const String _keyDoctorReportStampStyle = 'dawaai_stamp_style_v1';
+  static const String _keyDoctorReportStampColor = 'dawaai_stamp_color_v1';
+  static const String _keyDoctorReportStampClinic = 'dawaai_stamp_clinic_v1';
+  static const String _keyDoctorReportStampDoctor = 'dawaai_stamp_doctor_v1';
+
+  String getDoctorReportStampStyle() {
+    return _prefs.getString(_keyDoctorReportStampStyle) ?? 'circular_royal';
+  }
+
+  Future<void> setDoctorReportStampStyle(String style) async {
+    await _prefs.setString(_keyDoctorReportStampStyle, style);
+    notifyListeners();
+  }
+
+  int getDoctorReportStampColor() {
+    return _prefs.getInt(_keyDoctorReportStampColor) ?? 0xFF1D4ED8; // Royal Blue default
+  }
+
+  Future<void> setDoctorReportStampColor(int colorValue) async {
+    await _prefs.setInt(_keyDoctorReportStampColor, colorValue);
+    notifyListeners();
+  }
+
+  String getDoctorReportStampClinic() {
+    return _prefs.getString(_keyDoctorReportStampClinic) ?? '';
+  }
+
+  Future<void> setDoctorReportStampClinic(String clinic) async {
+    await _prefs.setString(_keyDoctorReportStampClinic, clinic);
+    notifyListeners();
+  }
+
+  String getDoctorReportStampDoctor() {
+    return _prefs.getString(_keyDoctorReportStampDoctor) ?? '';
+  }
+
+  Future<void> setDoctorReportStampDoctor(String doctor) async {
+    await _prefs.setString(_keyDoctorReportStampDoctor, doctor);
+    notifyListeners();
+  }
+
   Future<void> clearAllUserData() async {
     _medicinesCache.clear();
     _logsCache.clear();

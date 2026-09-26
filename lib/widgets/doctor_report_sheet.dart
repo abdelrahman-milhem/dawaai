@@ -19,6 +19,7 @@ import '../models/medicine.dart';
 import '../models/user_profile.dart';
 import '../services/storage_service.dart';
 import '../utils/date_utils.dart';
+import 'official_stamp_widget.dart';
 
 class DoctorReportSheet extends StatefulWidget {
   final StorageService storageService;
@@ -40,6 +41,23 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
   bool _isGeneratingPdf = false;
   bool _isGeneratingImage = false;
   bool _isPrinting = false;
+
+  void _openStampCustomizer() {
+    final refCode =
+        'DWA-${widget.profile.id.hashCode.abs().toString().padLeft(5, '0')}';
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => OfficialStampCustomizerSheet(
+        storageService: widget.storageService,
+        refCode: refCode,
+        onStampChanged: () {
+          if (mounted) setState(() {});
+        },
+      ),
+    );
+  }
 
   void _showToast(String message, {bool isError = false}) {
     if (!mounted) return;
@@ -429,6 +447,37 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
             ),
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: ElevatedButton.icon(
+              onPressed: _openStampCustomizer,
+              icon: const Icon(Icons.approval_rounded, size: 17),
+              label: Text(
+                'تخصيص الختم',
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    const Color(0xFF0D9488).withValues(alpha: 0.12),
+                foregroundColor: const Color(0xFF0D9488),
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: const BorderSide(
+                    color: Color(0xFF0D9488),
+                    width: 0.8,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -635,6 +684,12 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
         'DWA-${widget.profile.id.hashCode.abs().toString().padLeft(5, '0')}';
     final qrPayload =
         'DAWAAI-CLINICAL|PATIENT:${widget.profile.name}|REF:$refCode|DATE:${now.toIso8601String()}|MEDS:${medicines.length}|LOGS:${logs.length}';
+
+    final stampStyleId = widget.storageService.getDoctorReportStampStyle();
+    final stampColorValue = widget.storageService.getDoctorReportStampColor();
+    final stampClinic = widget.storageService.getDoctorReportStampClinic();
+    final stampDoctor = widget.storageService.getDoctorReportStampDoctor();
+    final stampStyleOption = OfficialStampsCatalog.getStyleById(stampStyleId);
 
     int scheduledDosesExpected = 0;
     for (final med in medicines) {
@@ -1546,25 +1601,26 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
                                   color: const Color(0xFF334155),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
                               Row(
                                 children: [
                                   Text(
-                                    'د. ',
+                                    stampDoctor.isNotEmpty
+                                        ? 'د. $stampDoctor'
+                                        : 'د. ____________________',
                                     style: GoogleFonts.cairo(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF64748B),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Container(
-                                      height: 1,
-                                      margin: const EdgeInsets.only(left: 16),
-                                      color: const Color(0xFFCBD5E1),
+                                      color: const Color(0xFF1E293B),
                                     ),
                                   ),
                                 ],
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                height: 1,
+                                margin: const EdgeInsets.only(left: 16),
+                                color: const Color(0xFFCBD5E1),
                               ),
                             ],
                           ),
@@ -1572,36 +1628,22 @@ class _DoctorReportSheetState extends State<DoctorReportSheet> {
 
                         const SizedBox(width: 16),
 
-                        // Official Clinic Stamp Box
-                        Container(
-                          width: 120,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: const Color(0xFF94A3B8),
-                              style: BorderStyle.solid,
-                              width: 1,
-                            ),
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.verified_rounded,
-                                  size: 13,
-                                  color: Color(0xFFCBD5E1),
-                                ),
-                                Text(
-                                  'الختم والاعتماد الرسمي',
-                                  style: GoogleFonts.cairo(
-                                    fontSize: 8,
-                                    color: const Color(0xFF94A3B8),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                        // Official Clinic Stamp Box - Clickable with Live Authentic Stamp!
+                        GestureDetector(
+                          onTap: _openStampCustomizer,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: Tooltip(
+                              message: 'اضغط لتغيير شكل ولون الختم الرسمي',
+                              child: OfficialStampWidget(
+                                styleType: stampStyleOption.type,
+                                stampColor: Color(stampColorValue),
+                                clinicName: stampClinic,
+                                doctorName: stampDoctor,
+                                refCode: refCode,
+                                scale: 1.0,
+                                enableRotation: true,
+                              ),
                             ),
                           ),
                         ),

@@ -551,5 +551,15 @@ void main() {
     // Verify Patient & Medicine details on A4 paper
     expect(find.text(profile.name), findsOneWidget);
     expect(find.text('بانادول إكسترا'), findsOneWidget);
+
+    // Verify Stamp Customizer Button exists and opens
+    expect(find.text('تخصيص الختم'), findsOneWidget);
+    await tester.tap(find.text('تخصيص الختم'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('اختيار وتخصيص الختم الرسمي'), findsOneWidget);
+    expect(find.text('الختم الدائري الملكي'), findsOneWidget);
+    expect(find.text('ختم الاعتماد الأمني'), findsOneWidget);
   });
 }

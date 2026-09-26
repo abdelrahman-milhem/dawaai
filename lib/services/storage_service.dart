@@ -214,6 +214,7 @@ class StorageService extends ChangeNotifier {
   Future<void> addMedicine(Medicine medicine) async {
     _medicinesCache.add(medicine);
     await saveMedicines(_medicinesCache);
+    await _autoSyncMedicineToActivePharmacy(medicine);
   }
 
   Future<void> updateMedicine(Medicine medicine) async {
@@ -221,12 +222,14 @@ class StorageService extends ChangeNotifier {
     if (index != -1) {
       _medicinesCache[index] = medicine;
       await saveMedicines(_medicinesCache);
+      await _autoSyncMedicineToActivePharmacy(medicine);
     }
   }
 
   Future<void> deleteMedicine(String id) async {
     _medicinesCache.removeWhere((m) => m.id == id);
     await saveMedicines(_medicinesCache);
+    await _autoRemoveMedicineFromActivePharmacy(id);
   }
 
   // --- DOSE LOGS ---
@@ -266,6 +269,9 @@ class StorageService extends ChangeNotifier {
       );
       final medStrings = _medicinesCache.map((m) => m.toJson()).toList();
       unawaited(_prefs.setStringList(_keyMedicines, medStrings));
+      if (_activeHomePharmacyIdCache != null) {
+        unawaited(_autoSyncMedicineToActivePharmacy(_medicinesCache[index]));
+      }
     }
 
     _autoBackupToDevice();
@@ -369,10 +375,12 @@ class StorageService extends ChangeNotifier {
       items: [],
     );
 
+    final oldPharmacyId = _activeHomePharmacyIdCache;
     pharmacies.removeWhere((p) => p.id.toUpperCase() == id.toUpperCase());
     pharmacies.add(newPharmacy);
     await saveHomePharmacies(pharmacies);
     await setActiveHomePharmacyId(id);
+    await _transferUserMedicinesToActivePharmacy(previousPharmacyId: oldPharmacyId);
     return newPharmacy;
   }
 
@@ -393,6 +401,7 @@ class StorageService extends ChangeNotifier {
       return false;
     }
 
+    final oldPharmacyId = _activeHomePharmacyIdCache;
     final pharmacy = pharmacies[index];
     final memberCleanName = memberName.trim().isNotEmpty ? memberName.trim() : 'فرد جديد';
 
@@ -409,10 +418,33 @@ class StorageService extends ChangeNotifier {
     }
 
     await setActiveHomePharmacyId(pharmacy.id);
+    await _transferUserMedicinesToActivePharmacy(previousPharmacyId: oldPharmacyId);
     return true;
   }
 
   Future<void> leaveActiveHomePharmacy() async {
+    final activeId = _activeHomePharmacyIdCache;
+    if (activeId != null) {
+      final pharmacies = List<HomePharmacy>.from(_pharmaciesCache);
+      final pIdx = pharmacies.indexWhere((p) => p.id.toUpperCase() == activeId.toUpperCase());
+      if (pIdx != -1) {
+        final oldPharmacy = pharmacies[pIdx];
+        final currentProfileName = getActiveProfile().name.toLowerCase().trim();
+        final myMedSyncIds = _medicinesCache.map((m) => 'med_sync_${m.id}').toSet();
+        final myMedNames = _medicinesCache.map((m) => m.name.toLowerCase().trim()).toSet();
+
+        // 1. Delete user's medicines from the old pharmacy
+        oldPharmacy.items.removeWhere((item) =>
+          myMedSyncIds.contains(item.id) ||
+          (item.addedByName.toLowerCase().trim() == currentProfileName && myMedNames.contains(item.name.toLowerCase().trim()))
+        );
+
+        // 2. Remove user from members list of old pharmacy
+        oldPharmacy.members.removeWhere((m) => m.name.toLowerCase().trim() == currentProfileName);
+
+        await saveHomePharmacies(pharmacies);
+      }
+    }
     await setActiveHomePharmacyId(null);
   }
 
@@ -485,9 +517,11 @@ class StorageService extends ChangeNotifier {
           }
         }
 
+        final oldPharmacyId = _activeHomePharmacyIdCache;
         pharmacies[existingIndex] = existing;
         await saveHomePharmacies(pharmacies);
         await setActiveHomePharmacyId(existing.id);
+        await _transferUserMedicinesToActivePharmacy(previousPharmacyId: oldPharmacyId);
         return existing;
       } else {
         // New pharmacy for this device
@@ -504,15 +538,171 @@ class StorageService extends ChangeNotifier {
             ),
           );
         }
+        final oldPharmacyId = _activeHomePharmacyIdCache;
         pharmacies.add(importedPharmacy);
         await saveHomePharmacies(pharmacies);
         await setActiveHomePharmacyId(importedPharmacy.id);
+        await _transferUserMedicinesToActivePharmacy(previousPharmacyId: oldPharmacyId);
         return importedPharmacy;
       }
     } catch (e) {
       debugPrint('Error importing pharmacy payload: $e');
       return null;
     }
+  }
+
+  // --- AUTOMATIC HOME PHARMACY SYNC & MIGRATION HELPERS ---
+  String _getMedicineUnitString(MedicineForm form) {
+    switch (form) {
+      case MedicineForm.syrup:
+        return 'مل';
+      case MedicineForm.drops:
+        return 'نقطة';
+      case MedicineForm.inhaler:
+        return 'بخة';
+      case MedicineForm.injection:
+        return 'حقنة';
+      default:
+        return 'حبة';
+    }
+  }
+
+  Future<void> _autoSyncMedicineToActivePharmacy(Medicine medicine) async {
+    final activeId = _activeHomePharmacyIdCache;
+    if (activeId == null) return;
+    final pharmacies = List<HomePharmacy>.from(_pharmaciesCache);
+    final pIdx = pharmacies.indexWhere((p) => p.id.toUpperCase() == activeId.toUpperCase());
+    if (pIdx == -1) return;
+
+    final pharmacy = pharmacies[pIdx];
+    final syncItemId = 'med_sync_${medicine.id}';
+    final currentProfile = getActiveProfile();
+
+    final itemIndex = pharmacy.items.indexWhere(
+      (item) => item.id == syncItemId || item.name.toLowerCase().trim() == medicine.name.toLowerCase().trim(),
+    );
+
+    final syncedItem = HomePharmacyItem(
+      id: syncItemId,
+      name: medicine.name,
+      form: medicine.form,
+      quantity: medicine.totalPills,
+      unit: _getMedicineUnitString(medicine.form),
+      storageLocation: 'خزانة الأدوية الرئيسية',
+      addedByName: currentProfile.name,
+      notes: medicine.instructions,
+      lowStockThreshold: medicine.lowStockThreshold > 0 ? medicine.lowStockThreshold : 5,
+    );
+
+    if (itemIndex != -1) {
+      pharmacy.items[itemIndex] = syncedItem;
+    } else {
+      pharmacy.items.add(syncedItem);
+    }
+
+    final memberExists = pharmacy.members.any(
+      (m) => m.name.toLowerCase().trim() == currentProfile.name.toLowerCase().trim(),
+    );
+    if (!memberExists) {
+      pharmacy.members.add(
+        HomePharmacyMember(
+          id: 'member_${DateTime.now().millisecondsSinceEpoch}',
+          name: currentProfile.name,
+          role: 'member',
+          avatarColor: currentProfile.colorValue,
+        ),
+      );
+    }
+
+    await saveHomePharmacies(pharmacies);
+  }
+
+  Future<void> _autoRemoveMedicineFromActivePharmacy(String medicineId) async {
+    final activeId = _activeHomePharmacyIdCache;
+    if (activeId == null) return;
+    final pharmacies = List<HomePharmacy>.from(_pharmaciesCache);
+    final pIdx = pharmacies.indexWhere((p) => p.id.toUpperCase() == activeId.toUpperCase());
+    if (pIdx == -1) return;
+
+    final pharmacy = pharmacies[pIdx];
+    final syncItemId = 'med_sync_$medicineId';
+    pharmacy.items.removeWhere((item) => item.id == syncItemId);
+    await saveHomePharmacies(pharmacies);
+  }
+
+  Future<void> _transferUserMedicinesToActivePharmacy({String? previousPharmacyId}) async {
+    final activeId = _activeHomePharmacyIdCache;
+    if (activeId == null) return;
+
+    final pharmacies = List<HomePharmacy>.from(_pharmaciesCache);
+
+    // 1. If previousPharmacyId was different, remove user's personal medicines from previous pharmacy
+    if (previousPharmacyId != null && previousPharmacyId.toUpperCase() != activeId.toUpperCase()) {
+      final oldIdx = pharmacies.indexWhere((p) => p.id.toUpperCase() == previousPharmacyId.toUpperCase());
+      if (oldIdx != -1) {
+        final oldPharmacy = pharmacies[oldIdx];
+        final currentProfileName = getActiveProfile().name.toLowerCase().trim();
+        final myMedSyncIds = _medicinesCache.map((m) => 'med_sync_${m.id}').toSet();
+        final myMedNames = _medicinesCache.map((m) => m.name.toLowerCase().trim()).toSet();
+
+        oldPharmacy.items.removeWhere((item) =>
+          myMedSyncIds.contains(item.id) ||
+          (item.addedByName.toLowerCase().trim() == currentProfileName && myMedNames.contains(item.name.toLowerCase().trim()))
+        );
+        oldPharmacy.members.removeWhere((m) => m.name.toLowerCase().trim() == currentProfileName);
+      }
+    }
+
+    // 2. Add all user's medicines to the new active pharmacy
+    final newIdx = pharmacies.indexWhere((p) => p.id.toUpperCase() == activeId.toUpperCase());
+    if (newIdx != -1) {
+      final newPharmacy = pharmacies[newIdx];
+      final currentProfile = getActiveProfile();
+
+      for (final med in _medicinesCache) {
+        final syncId = 'med_sync_${med.id}';
+        final itIdx = newPharmacy.items.indexWhere(
+          (i) => i.id == syncId || i.name.toLowerCase().trim() == med.name.toLowerCase().trim(),
+        );
+
+        final item = HomePharmacyItem(
+          id: syncId,
+          name: med.name,
+          form: med.form,
+          quantity: med.totalPills,
+          unit: _getMedicineUnitString(med.form),
+          storageLocation: 'خزانة الأدوية الرئيسية',
+          addedByName: currentProfile.name,
+          notes: med.instructions,
+          lowStockThreshold: med.lowStockThreshold > 0 ? med.lowStockThreshold : 5,
+        );
+
+        if (itIdx != -1) {
+          newPharmacy.items[itIdx] = item;
+        } else {
+          newPharmacy.items.add(item);
+        }
+      }
+
+      final memberExists = newPharmacy.members.any(
+        (m) =>
+            m.name.toLowerCase().trim() == currentProfile.name.toLowerCase().trim() ||
+            m.name.toLowerCase().trim() == newPharmacy.adminName.toLowerCase().trim() ||
+            m.role == 'admin',
+      );
+      if (!memberExists) {
+        newPharmacy.members.add(
+          HomePharmacyMember(
+            id: 'member_${DateTime.now().millisecondsSinceEpoch}',
+            name: currentProfile.name,
+            role: 'member',
+            avatarColor: currentProfile.colorValue,
+          ),
+        );
+      }
+    }
+
+    await saveHomePharmacies(pharmacies);
   }
 
   Future<void> addHomeItem(HomePharmacyItem item) async {

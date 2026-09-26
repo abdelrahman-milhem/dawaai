@@ -427,4 +427,57 @@ void main() {
     expect(importedOnB.members.any((m) => m.name == 'فاطمة'), isTrue);
     expect(storageB.getActiveHomePharmacyId(), equals('HOME-TEST-QR'));
   });
+
+  test('Automatic Medicine Sync & Cross-Pharmacy Migration on Leave/Switch', () async {
+    SharedPreferences.setMockInitialValues({});
+    final storage = await StorageService.init();
+
+    // 1. Create Pharmacy 1 (القديمة)
+    await storage.createHomePharmacy(
+      name: 'صيدلية المنزل القديم',
+      password: '1111',
+      adminName: 'أنا',
+      customId: 'PHARM-OLD',
+    );
+    expect(storage.getActiveHomePharmacyId(), equals('PHARM-OLD'));
+
+    // 2. User adds a personal medicine -> must automatically appear in PHARM-OLD
+    final med = Medicine(
+      id: 'my_aspirin_100',
+      name: 'أسبرين 100 ملغ',
+      type: MedicineType.treatment,
+      totalPills: 50,
+      pillsPerDose: 1,
+    );
+    await storage.addMedicine(med);
+
+    // Verify it automatically exists in PHARM-OLD items
+    var currentPharm = storage.getActiveHomePharmacy()!;
+    expect(currentPharm.items.any((i) => i.name == 'أسبرين 100 ملغ' && i.quantity == 50), isTrue);
+
+    // 3. User switches to a new Pharmacy (الجديدة)
+    await storage.createHomePharmacy(
+      name: 'صيدلية المنزل الجديد',
+      password: '2222',
+      adminName: 'أنا',
+      customId: 'PHARM-NEW',
+    );
+    expect(storage.getActiveHomePharmacyId(), equals('PHARM-NEW'));
+
+    // Verify:
+    // A) Medicines are now present in the new pharmacy
+    final newPharm = storage.getActiveHomePharmacy()!;
+    expect(newPharm.items.any((i) => i.name == 'أسبرين 100 ملغ'), isTrue);
+
+    // B) Medicines are DELETED from the old pharmacy (PHARM-OLD)
+    final oldPharmUpdated = storage.getHomePharmacies().firstWhere((p) => p.id == 'PHARM-OLD');
+    expect(oldPharmUpdated.items.any((i) => i.name == 'أسبرين 100 ملغ'), isFalse);
+
+    // 4. User leaves the new pharmacy -> personal medicines deleted from PHARM-NEW
+    await storage.leaveActiveHomePharmacy();
+    expect(storage.getActiveHomePharmacyId(), isNull);
+
+    final newPharmAfterLeave = storage.getHomePharmacies().firstWhere((p) => p.id == 'PHARM-NEW');
+    expect(newPharmAfterLeave.items.any((i) => i.name == 'أسبرين 100 ملغ'), isFalse);
+  });
 }

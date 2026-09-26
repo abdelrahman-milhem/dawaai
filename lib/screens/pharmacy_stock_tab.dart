@@ -475,38 +475,45 @@ class _PharmacyStockTabState extends State<PharmacyStockTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.wifi_rounded,
+                            color: Color(0xFF34D399),
+                            size: 14,
+                          ),
+                          SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              Ar.connectedToHomeNetwork,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.wifi_rounded,
-                          color: Color(0xFF34D399),
-                          size: 14,
-                        ),
-                        SizedBox(width: 5),
-                        Text(
-                          Ar.connectedToHomeNetwork,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
+                  const SizedBox(width: 6),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -769,62 +776,77 @@ class _PharmacyStockTabState extends State<PharmacyStockTab> {
                     const SizedBox(height: 8),
 
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         // Quick Share Invite Button
-                        InkWell(
-                          onTap: () => _sharePharmacyCredentials(pharmacy),
-                          borderRadius: BorderRadius.circular(10),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.share_rounded,
-                                  color: Color(0xFF67E8F9),
-                                  size: 16,
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  Ar.shareHomeInviteBtn,
-                                  style: TextStyle(
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _sharePharmacyCredentials(pharmacy),
+                            borderRadius: BorderRadius.circular(10),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.share_rounded,
                                     color: Color(0xFF67E8F9),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12.5,
+                                    size: 15,
                                   ),
-                                ),
-                              ],
+                                  SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      Ar.shareHomeInviteBtn,
+                                      style: TextStyle(
+                                        color: Color(0xFF67E8F9),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11.5,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                         Container(width: 1, height: 16, color: Colors.white24),
                         // QR Code Share Button
-                        InkWell(
-                          onTap: () => PharmacyQrDialog.show(
-                            context,
-                            pharmacy: pharmacy,
-                            storageService: widget.storageService,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.qr_code_2_rounded,
-                                  color: Color(0xFF34D399),
-                                  size: 16,
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  Ar.sharePharmacyQrBtn,
-                                  style: TextStyle(
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => PharmacyQrDialog.show(
+                              context,
+                              pharmacy: pharmacy,
+                              storageService: widget.storageService,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.qr_code_2_rounded,
                                     color: Color(0xFF34D399),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12.5,
+                                    size: 15,
                                   ),
-                                ),
-                              ],
+                                  SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      Ar.sharePharmacyQrBtn,
+                                      style: TextStyle(
+                                        color: Color(0xFF34D399),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11.5,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

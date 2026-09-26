@@ -777,4 +777,21 @@ class Ar {
   static const String searchAndApply = 'بحث ومطابقة';
   static const String cameraPermissionRequired = 'يرجى تفعيل صلاحية الكاميرا لمسح الباركود';
   static const String scannedBarcodeLabel = 'الباركود: ';
+
+  // Home Pharmacy QR Sharing & Synchronization
+  static const String sharePharmacyQrBtn = 'مشاركة الصيدلية عبر QR';
+  static const String sharePharmacyTooltip = 'مشاركة هذه الصيدلية مع أفراد العائلة عبر رمز QR أو كود المشاركة';
+  static const String pharmacyQrTitle = 'مشاركة صيدلية المنزل';
+  static const String pharmacyQrSubtitle = 'امسح هذا الرمز من هاتف أي فرد بالعائلة للانضمام الفوري ومزامنة المخزون';
+  static const String scanPharmacyQrBtn = 'مسح رمز QR للانضمام';
+  static const String scanPharmacyQrSubtitle = 'وجّه الكاميرا نحو رمز QR على هاتف مدير الصيدلية أو أحد أفرادها';
+  static const String copyPharmacyCodeBtn = 'نسخ كود المشاركة للواتساب';
+  static const String pharmacyCodeCopied = 'تم نسخ كود الصيدلية إلى الحافظة! يمكنك إرساله بالواتساب لأفراد أسرتك.';
+  static const String pastePharmacyCodeBtn = 'لصق كود المشاركة';
+  static const String pastePharmacyCodeTitle = 'الانضمام عبر كود مشاركة نصي';
+  static const String pastePharmacyCodeHint = 'الصق هنا كود الصيدلية (يبدأ بـ DAWAAI_PHARMACY_V1:)';
+  static const String pastePharmacyCodeConfirm = 'انضمام ومزامنة الآن';
+  static const String pharmacyImportSuccess = 'تم الانضمام ومزامنة أدوية ومخزون الصيدلية بنجاح!';
+  static const String pharmacyImportFailed = 'رمز الصيدلية غير صالح أو تالف، تأكد من نسخه كاملاً.';
+  static const String pharmacyQrInstructions = '• افتح التطبيق على الهاتف الآخر.\n• اضغط على (مسح رمز QR للانضمام) من تبويب خزانة الأدوية.\n• أو انسخ الكود وأرسله عبر واتساب وسيتم الانضمام بضغطة زر.';
 }

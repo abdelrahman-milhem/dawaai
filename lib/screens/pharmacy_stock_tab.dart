@@ -9,6 +9,8 @@ import '../services/reminder_service.dart';
 import '../utils/date_utils.dart';
 import '../services/medical_time_service.dart';
 import '../widgets/pill_refresh_indicator.dart';
+import '../widgets/pharmacy_qr_dialog.dart';
+import '../widgets/pharmacy_qr_scanner_dialog.dart';
 
 class PharmacyStockTab extends StatefulWidget {
   final StorageService storageService;
@@ -194,6 +196,27 @@ class _PharmacyStockTabState extends State<PharmacyStockTab> {
           ),
         ),
         const SizedBox(height: 24),
+
+        // Action Card 0: Scan QR Code or Paste Sharing Code
+        _buildActionCard(
+          context,
+          isDark: isDark,
+          icon: Icons.qr_code_scanner_rounded,
+          iconColor: const Color(0xFF0D9488),
+          title: Ar.scanPharmacyQrBtn,
+          subtitle: 'امسح رمز QR من هاتف مدير الصيدلية أو الصق كود المشاركة للانضمام فوراً ومزامنة جميع الأدوية والمخزون.',
+          buttonText: 'مسح رمز QR أو لصق الكود',
+          onTap: () async {
+            final joined = await PharmacyQrScannerDialog.show(
+              context,
+              storageService: widget.storageService,
+            );
+            if (joined != null && mounted) {
+              setState(() {});
+            }
+          },
+        ),
+        const SizedBox(height: 16),
 
         // Action Card 1: Join Home Pharmacy
         _buildActionCard(
@@ -484,40 +507,97 @@ class _PharmacyStockTabState extends State<PharmacyStockTab> {
                       ],
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.settings_outlined,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                    tooltip: 'خيارات الصيدلية',
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    onSelected: (val) async {
-                      if (val == 'leave') {
-                        _confirmLeavePharmacy(context);
-                      } else if (val == 'switch') {
-                        _openJoinPharmacyDialog(context);
-                      } else if (val == 'create') {
-                        _openCreatePharmacyDialog(context);
-                      }
-                    },
-                    itemBuilder: (ctx) => [
-                      const PopupMenuItem(
-                        value: 'switch',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.swap_horiz_rounded,
-                              color: Color(0xFF3B82F6),
-                              size: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Text('الانضمام لصيدلية منزل أخرى'),
-                          ],
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: () => PharmacyQrDialog.show(
+                          context,
+                          pharmacy: pharmacy,
+                          storageService: widget.storageService,
                         ),
+                        icon: const Icon(
+                          Icons.qr_code_2_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        tooltip: Ar.sharePharmacyQrBtn,
                       ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(
+                          Icons.settings_outlined,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                        tooltip: 'خيارات الصيدلية',
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        onSelected: (val) async {
+                          if (val == 'share_qr') {
+                            PharmacyQrDialog.show(
+                              context,
+                              pharmacy: pharmacy,
+                              storageService: widget.storageService,
+                            );
+                          } else if (val == 'scan_qr') {
+                            final joined = await PharmacyQrScannerDialog.show(
+                              context,
+                              storageService: widget.storageService,
+                            );
+                            if (joined != null && mounted) setState(() {});
+                          } else if (val == 'leave') {
+                            _confirmLeavePharmacy(context);
+                          } else if (val == 'switch') {
+                            _openJoinPharmacyDialog(context);
+                          } else if (val == 'create') {
+                            _openCreatePharmacyDialog(context);
+                          }
+                        },
+                        itemBuilder: (ctx) => [
+                          const PopupMenuItem(
+                            value: 'share_qr',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.qr_code_2_rounded,
+                                  color: Color(0xFF0D9488),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 10),
+                                Text('مشاركة الصيدلية عبر رمز QR'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'scan_qr',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.qr_code_scanner_rounded,
+                                  color: Color(0xFF10B981),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 10),
+                                Text('مسح كود صيدلية للانضمام/المزامنة'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          const PopupMenuItem(
+                            value: 'switch',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.swap_horiz_rounded,
+                                  color: Color(0xFF3B82F6),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 10),
+                                Text('الانضمام لصيدلية منزل أخرى'),
+                              ],
+                            ),
+                          ),
                       const PopupMenuItem(
                         value: 'create',
                         child: Row(
@@ -554,7 +634,9 @@ class _PharmacyStockTabState extends State<PharmacyStockTab> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+            ],
+          ),
+          const SizedBox(height: 12),
 
               // Title
               Text(
@@ -686,32 +768,67 @@ class _PharmacyStockTabState extends State<PharmacyStockTab> {
                     const Divider(height: 1, color: Colors.white24),
                     const SizedBox(height: 8),
 
-                    // Quick Share Invite Button
-                    InkWell(
-                      onTap: () => _sharePharmacyCredentials(pharmacy),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.share_rounded,
-                              color: Color(0xFF67E8F9),
-                              size: 16,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Quick Share Invite Button
+                        InkWell(
+                          onTap: () => _sharePharmacyCredentials(pharmacy),
+                          borderRadius: BorderRadius.circular(10),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.share_rounded,
+                                  color: Color(0xFF67E8F9),
+                                  size: 16,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  Ar.shareHomeInviteBtn,
+                                  style: TextStyle(
+                                    color: Color(0xFF67E8F9),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              Ar.shareHomeInviteBtn,
-                              style: const TextStyle(
-                                color: Color(0xFF67E8F9),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12.5,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                        Container(width: 1, height: 16, color: Colors.white24),
+                        // QR Code Share Button
+                        InkWell(
+                          onTap: () => PharmacyQrDialog.show(
+                            context,
+                            pharmacy: pharmacy,
+                            storageService: widget.storageService,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.qr_code_2_rounded,
+                                  color: Color(0xFF34D399),
+                                  size: 16,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  Ar.sharePharmacyQrBtn,
+                                  style: TextStyle(
+                                    color: Color(0xFF34D399),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

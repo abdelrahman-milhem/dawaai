@@ -376,4 +376,55 @@ void main() {
 
     reminder.dispose();
   });
+
+  test('Home Pharmacy QR Export & Cross-Device Import Synchronization', () async {
+    // Device A: Create Pharmacy with items
+    SharedPreferences.setMockInitialValues({});
+    final storageA = await StorageService.init();
+
+    await storageA.createHomePharmacy(
+      name: 'صيدلية عائلة محمد',
+      password: '5566',
+      adminName: 'محمد',
+      customId: 'HOME-TEST-QR',
+    );
+
+    // Add an item to Pharmacy A
+    final item1 = HomePharmacyItem(
+      id: 'item_panadol_1',
+      name: 'بنادول إكسترا',
+      quantity: 24,
+      unit: 'قرص',
+      storageLocation: 'خزانة الصالة',
+      expiryDate: DateTime.now().add(const Duration(days: 300)),
+    );
+    await storageA.addHomeItem(item1);
+
+    final updatedPharmacyA = storageA.getActiveHomePharmacy()!;
+    expect(updatedPharmacyA.items.length, equals(1));
+
+    // Export QR Payload
+    final qrPayload = storageA.exportPharmacyPayload(updatedPharmacyA);
+    expect(qrPayload.startsWith('DAWAAI_PHARMACY_V1:'), isTrue);
+
+    // Device B: Fresh install on another phone (empty storage)
+    SharedPreferences.setMockInitialValues({});
+    final storageB = await StorageService.init();
+    expect(storageB.getHomePharmacies().any((p) => p.id == 'HOME-TEST-QR'), isFalse);
+
+    // Device B scans QR code / imports payload
+    final importedOnB = await storageB.importPharmacyFromPayload(
+      qrPayload,
+      memberName: 'فاطمة',
+    );
+
+    expect(importedOnB, isNotNull);
+    expect(importedOnB!.id, equals('HOME-TEST-QR'));
+    expect(importedOnB.name, equals('صيدلية عائلة محمد'));
+    expect(importedOnB.items.length, equals(1));
+    expect(importedOnB.items.first.name, equals('بنادول إكسترا'));
+    expect(importedOnB.items.first.quantity, equals(24));
+    expect(importedOnB.members.any((m) => m.name == 'فاطمة'), isTrue);
+    expect(storageB.getActiveHomePharmacyId(), equals('HOME-TEST-QR'));
+  });
 }

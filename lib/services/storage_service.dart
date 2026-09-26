@@ -416,6 +416,105 @@ class StorageService extends ChangeNotifier {
     await setActiveHomePharmacyId(null);
   }
 
+  /// تصدير صيدلية المنزل إلى كود QR أو كود نصي مشفر مضغوط
+  String exportPharmacyPayload(HomePharmacy pharmacy) {
+    final map = pharmacy.toMap();
+    final jsonStr = json.encode(map);
+    final compressed = gzip.encode(utf8.encode(jsonStr));
+    final b64 = base64Url.encode(compressed);
+    return 'DAWAAI_PHARMACY_V1:$b64';
+  }
+
+  /// استيراد أو الانضمام لصيدلية منزل عبر كود QR أو كود المشاركة المنسوخ
+  Future<HomePharmacy?> importPharmacyFromPayload(
+    String payload, {
+    required String memberName,
+  }) async {
+    try {
+      final clean = payload.trim();
+      HomePharmacy? importedPharmacy;
+
+      if (clean.startsWith('DAWAAI_PHARMACY_V1:')) {
+        final b64 = clean.substring('DAWAAI_PHARMACY_V1:'.length).trim();
+        final compressed = base64Url.decode(b64);
+        final jsonStr = utf8.decode(gzip.decode(compressed));
+        final map = json.decode(jsonStr) as Map<String, dynamic>;
+        importedPharmacy = HomePharmacy.fromMap(map);
+      } else {
+        // Fallback for raw JSON if someone pasted JSON directly
+        try {
+          final map = json.decode(clean) as Map<String, dynamic>;
+          importedPharmacy = HomePharmacy.fromMap(map);
+        } catch (_) {}
+      }
+
+      if (importedPharmacy == null || importedPharmacy.id.isEmpty) {
+        return null;
+      }
+
+      final pharmacies = List<HomePharmacy>.from(_pharmaciesCache);
+      final memberCleanName = memberName.trim().isNotEmpty ? memberName.trim() : 'فرد جديد';
+
+      final existingIndex = pharmacies.indexWhere(
+        (p) => p.id.toUpperCase() == importedPharmacy!.id.toUpperCase(),
+      );
+
+      if (existingIndex != -1) {
+        final existing = pharmacies[existingIndex];
+        final memberExists = existing.members.any(
+          (m) => m.name.toLowerCase() == memberCleanName.toLowerCase(),
+        );
+        if (!memberExists) {
+          existing.members.add(
+            HomePharmacyMember(
+              id: 'member_${DateTime.now().millisecondsSinceEpoch}',
+              name: memberCleanName,
+              role: 'member',
+              avatarColor: 0xFF3B82F6,
+            ),
+          );
+        }
+
+        // Merge items from imported
+        for (final item in importedPharmacy.items) {
+          final itIdx = existing.items.indexWhere((i) => i.id == item.id);
+          if (itIdx != -1) {
+            existing.items[itIdx] = item;
+          } else {
+            existing.items.add(item);
+          }
+        }
+
+        pharmacies[existingIndex] = existing;
+        await saveHomePharmacies(pharmacies);
+        await setActiveHomePharmacyId(existing.id);
+        return existing;
+      } else {
+        // New pharmacy for this device
+        final memberExists = importedPharmacy.members.any(
+          (m) => m.name.toLowerCase() == memberCleanName.toLowerCase(),
+        );
+        if (!memberExists) {
+          importedPharmacy.members.add(
+            HomePharmacyMember(
+              id: 'member_${DateTime.now().millisecondsSinceEpoch}',
+              name: memberCleanName,
+              role: 'member',
+              avatarColor: 0xFF3B82F6,
+            ),
+          );
+        }
+        pharmacies.add(importedPharmacy);
+        await saveHomePharmacies(pharmacies);
+        await setActiveHomePharmacyId(importedPharmacy.id);
+        return importedPharmacy;
+      }
+    } catch (e) {
+      debugPrint('Error importing pharmacy payload: $e');
+      return null;
+    }
+  }
+
   Future<void> addHomeItem(HomePharmacyItem item) async {
     final activeId = _activeHomePharmacyIdCache;
     if (activeId == null) return;

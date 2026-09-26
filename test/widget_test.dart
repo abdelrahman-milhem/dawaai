@@ -710,4 +710,40 @@ void main() {
     expect(savedMed, isNotNull);
     expect(savedMed!.name.contains('بنادول'), isTrue);
   });
+
+  testWidgets('Zero-Overflow verification across small phone, normal phone, and tablet screen sizes', (WidgetTester tester) async {
+    final panadol = DrugDatabase.search('بنادول').first;
+    final screenSizes = [
+      const Size(320, 568), // Ultra compact phone (iPhone SE 1st gen)
+      const Size(360, 640), // Standard Android phone
+      const Size(390, 844), // Modern iPhone (12/13/14)
+      const Size(412, 915), // Large Android phone (Pixel 7)
+      const Size(768, 1024), // iPad / Tablet
+    ];
+
+    for (final size in screenSizes) {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1.0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AddMedicineSheet(
+              initialDrugInfo: panadol,
+              onSave: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Ensure no layout exceptions or RenderFlex overflows occur
+      expect(tester.takeException(), isNull);
+    }
+
+    // Reset physical size
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
 }

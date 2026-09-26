@@ -624,8 +624,8 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.92,
       ),
       padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
+        left: MediaQuery.of(context).size.width < 360 ? 12 : 20,
+        right: MediaQuery.of(context).size.width < 360 ? 12 : 20,
         top: 14,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
@@ -1045,15 +1045,16 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                         ),
                       ),
                       if (!isEditing)
-                        TextButton.icon(
+                        IconButton(
                           onPressed: () {
                             setState(() => _selectedDrugInfo = null);
                           },
-                          icon: const Icon(Icons.sync_rounded, size: 16),
-                          label: const Text(
-                            Ar.changeSelectedDrugBtn,
-                            style: TextStyle(fontSize: 12),
+                          icon: const Icon(
+                            Icons.sync_rounded,
+                            size: 20,
+                            color: Color(0xFF0D9488),
                           ),
+                          tooltip: Ar.changeSelectedDrugBtn,
                         ),
                     ],
                   ),
@@ -1111,12 +1112,14 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                               color: Color(0xFF3B82F6),
                             ),
                             const SizedBox(width: 6),
-                            const Text(
-                              'اختر العيار والتركيز المتوفر لديك (معتمد من الموسوعة 🔒):',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF3B82F6),
+                            const Expanded(
+                              child: Text(
+                                'اختر العيار والتركيز المتوفر لديك (معتمد من الموسوعة 🔒):',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF3B82F6),
+                                ),
                               ),
                             ),
                           ],
@@ -1256,30 +1259,35 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                             enabled: _pillsPerDose > doseLimit.minDose,
                             onPressed: () => _adjustPillsPerDose(-1),
                           ),
-                          const SizedBox(width: 20),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.cardColor,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: const Color(0xFFD97706),
-                                width: 1.5,
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
                               ),
-                            ),
-                            child: Text(
-                              '$_pillsPerDose ${doseLimit.unit}',
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFD97706),
+                              decoration: BoxDecoration(
+                                color: theme.cardColor,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: const Color(0xFFD97706),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '$_pillsPerDose ${doseLimit.unit}',
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFD97706),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 20),
+                          const SizedBox(width: 12),
                           _buildStepperButton(
                             icon: Icons.add,
                             enabled: _pillsPerDose < doseLimit.maxSafeDose,
@@ -1394,7 +1402,10 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Row(
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -1418,7 +1429,6 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
                             OutlinedButton.icon(
                               onPressed: () {
                                 setState(() {
@@ -1438,7 +1448,6 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 6),
                             OutlinedButton.icon(
                               onPressed: () async {
                                 final picked = await showTimePicker(
@@ -1566,27 +1575,32 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                             enabled: _totalPills > 0,
                             onPressed: () => _adjustStock(-1),
                           ),
-                          const SizedBox(width: 16),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF1E293B)
-                                  : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '$_totalPills ${doseLimit.unit}',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF1E293B)
+                                    : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '$_totalPills ${doseLimit.unit}',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           _buildStepperButton(
                             icon: Icons.add,
                             enabled: true,
@@ -1595,29 +1609,31 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            Ar.quickAddPills,
-                            style: TextStyle(fontSize: 11.5, color: Colors.grey),
-                          ),
-                          const SizedBox(width: 6),
-                          ActionChip(
-                            label: const Text('+10', style: TextStyle(fontSize: 11)),
-                            onPressed: () => _adjustStock(10),
-                          ),
-                          const SizedBox(width: 6),
-                          ActionChip(
-                            label: const Text('+20', style: TextStyle(fontSize: 11)),
-                            onPressed: () => _adjustStock(20),
-                          ),
-                          const SizedBox(width: 6),
-                          ActionChip(
-                            label: const Text('+30', style: TextStyle(fontSize: 11)),
-                            onPressed: () => _adjustStock(30),
-                          ),
-                        ],
+                      Center(
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            const Text(
+                              Ar.quickAddPills,
+                              style: TextStyle(fontSize: 11.5, color: Colors.grey),
+                            ),
+                            ActionChip(
+                              label: const Text('+10', style: TextStyle(fontSize: 11)),
+                              onPressed: () => _adjustStock(10),
+                            ),
+                            ActionChip(
+                              label: const Text('+20', style: TextStyle(fontSize: 11)),
+                              onPressed: () => _adjustStock(20),
+                            ),
+                            ActionChip(
+                              label: const Text('+30', style: TextStyle(fontSize: 11)),
+                              onPressed: () => _adjustStock(30),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -1640,24 +1656,29 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              _showAdvanced
-                                  ? Icons.tune_rounded
-                                  : Icons.expand_more_rounded,
-                              size: 16,
-                              color: Colors.grey[700],
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              Ar.advancedOptionsToggle,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(
+                                _showAdvanced
+                                    ? Icons.tune_rounded
+                                    : Icons.expand_more_rounded,
+                                size: 16,
+                                color: Colors.grey[700],
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  Ar.advancedOptionsToggle,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         Icon(
                           _showAdvanced
@@ -1833,12 +1854,14 @@ class _AddMedicineSheetState extends State<AddMedicineSheet> {
           child: Icon(icon, color: color, size: 18),
         ),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: color,
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ),
       ],

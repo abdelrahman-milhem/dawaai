@@ -480,4 +480,36 @@ void main() {
     final newPharmAfterLeave = storage.getHomePharmacies().firstWhere((p) => p.id == 'PHARM-NEW');
     expect(newPharmAfterLeave.items.any((i) => i.name == 'أسبرين 100 ملغ'), isFalse);
   });
+
+  test('Retroactive Sync: Previously added medicines automatically populate active pharmacy', () async {
+    SharedPreferences.setMockInitialValues({});
+    final storage = await StorageService.init();
+
+    // 1. Add personal medicine BEFORE having any active pharmacy
+    final preExistingMed = Medicine(
+      id: 'pre_existing_med_1',
+      name: 'أوميغا 3 بلس',
+      type: MedicineType.treatment,
+      totalPills: 60,
+      pillsPerDose: 2,
+    );
+    await storage.addMedicine(preExistingMed);
+
+    // 2. Simulate having an active pharmacy with NO items (e.g. from an old version)
+    final emptyPharmacy = HomePharmacy(
+      id: 'OLD-EMPTY-PHARM',
+      name: 'صيدلية سابقة',
+      password: '123',
+      adminName: 'أنا',
+      items: [],
+    );
+    await storage.saveHomePharmacies([emptyPharmacy]);
+    await storage.setActiveHomePharmacyId('OLD-EMPTY-PHARM');
+
+    // 3. Running sync retroactively reconciles and syncs the pre-existing medicine!
+    await storage.syncAllExistingMedicinesToActivePharmacy();
+    final retrievedPharm = storage.getActiveHomePharmacy();
+    expect(retrievedPharm, isNotNull);
+    expect(retrievedPharm!.items.any((i) => i.name == 'أوميغا 3 بلس' && i.quantity == 60), isTrue);
+  });
 }

@@ -49,6 +49,11 @@ class _PharmacyStockTabState extends State<PharmacyStockTab> {
   void initState() {
     super.initState();
     widget.storageService.addListener(_onStorageUpdate);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.storageService.syncAllExistingMedicinesToActivePharmacy();
+      }
+    });
   }
 
   @override

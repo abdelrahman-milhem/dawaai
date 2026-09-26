@@ -137,6 +137,7 @@ class StorageService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final service = StorageService(prefs);
     await service._initSampleDataIfNeeded();
+    await service.syncAllExistingMedicinesToActivePharmacy();
     return service;
   }
 
@@ -703,6 +704,13 @@ class StorageService extends ChangeNotifier {
     }
 
     await saveHomePharmacies(pharmacies);
+  }
+
+  /// مزامنة كافة الأدوية الشخصية الحالية مع الصيدلية المنزلية النشطة
+  Future<void> syncAllExistingMedicinesToActivePharmacy() async {
+    final activeId = _activeHomePharmacyIdCache;
+    if (activeId == null) return;
+    await _transferUserMedicinesToActivePharmacy();
   }
 
   Future<void> addHomeItem(HomePharmacyItem item) async {
